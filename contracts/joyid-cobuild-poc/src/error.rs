@@ -1,4 +1,5 @@
-use ckb_std::error::SysError;
+use ckb_auth_rs::CkbAuthError;
+use ckb_std::{debug, error::SysError};
 
 /// Error
 #[repr(i8)]
@@ -8,7 +9,8 @@ pub enum Error {
     LengthNotEnough,
     Encoding,
     // Add customized errors here...
-    MyError,
+    CkbAuthLoadError,
+    CkbAuthError,
 }
 
 impl From<SysError> for Error {
@@ -20,6 +22,16 @@ impl From<SysError> for Error {
             LengthNotEnough(_) => Self::LengthNotEnough,
             Encoding => Self::Encoding,
             Unknown(err_code) => panic!("unexpected sys error {}", err_code),
+        }
+    }
+}
+
+impl From<CkbAuthError> for Error {
+    fn from(err: CkbAuthError) -> Self {
+        debug!("ckb auth error: {:?}", err);
+        match err {
+            CkbAuthError::RunDLError => Error::CkbAuthError,
+            _ => Error::CkbAuthLoadError,
         }
     }
 }

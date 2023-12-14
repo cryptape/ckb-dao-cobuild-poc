@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 ckb-std = "0.14.0"
+ckb-auth-rs = { path = "../../deps/ckb-auth/ckb-auth-rs" }

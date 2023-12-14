@@ -1,52 +1,52 @@
 use super::*;
-use ckb_testtool::ckb_error::Error;
-use ckb_testtool::ckb_types::{bytes::Bytes, core::TransactionBuilder, packed::*, prelude::*};
+use ckb_testtool::ckb_types::{bytes::Bytes, core::TransactionBuilder, packed, prelude::*};
 use ckb_testtool::context::Context;
 
 const MAX_CYCLES: u64 = 10_000_000;
 
-// error numbers
-const ERROR_EMPTY_ARGS: i8 = 5;
+fn deploy_joyid_cobuild_poc(context: &mut Context) -> packed::OutPoint {
+    let code = Loader::default().load_binary("joyid-cobuild-poc");
+    context.deploy_cell(code)
+}
 
-fn assert_script_error(err: Error, err_code: i8) {
-    let error_string = err.to_string();
-    assert!(
-        error_string.contains(format!("error code {} ", err_code).as_str()),
-        "error_string: {}, expected_error_code: {}",
-        error_string,
-        err_code
-    );
+fn deploy_auth_libecc(context: &mut Context) -> packed::CellDep {
+    let code = Loader::default().load_binary("../../deps/ckb-auth/build/auth_libecc");
+    let out_point = context.deploy_cell(code);
+    packed::CellDep::new_builder()
+        .out_point(out_point)
+        .dep_type(0u8.into())
+        .build()
 }
 
 #[test]
 fn test_success() {
     // deploy contract
     let mut context = Context::default();
-    let contract_bin: Bytes = Loader::default().load_binary("joyid-cobuild-poc");
-    let out_point = context.deploy_cell(contract_bin);
+    let joyid_cobuild_poc_out_point = deploy_joyid_cobuild_poc(&mut context);
+    let auth_libecc_cell_dep = deploy_auth_libecc(&mut context);
 
     // prepare scripts
     let lock_script = context
-        .build_script(&out_point, Bytes::from(vec![42]))
+        .build_script(&joyid_cobuild_poc_out_point, Bytes::from(vec![]))
         .expect("script");
 
     // prepare cells
     let input_out_point = context.create_cell(
-        CellOutput::new_builder()
+        packed::CellOutput::new_builder()
             .capacity(1000u64.pack())
             .lock(lock_script.clone())
             .build(),
         Bytes::new(),
     );
-    let input = CellInput::new_builder()
+    let input = packed::CellInput::new_builder()
         .previous_output(input_out_point)
         .build();
     let outputs = vec![
-        CellOutput::new_builder()
+        packed::CellOutput::new_builder()
             .capacity(500u64.pack())
             .lock(lock_script.clone())
             .build(),
-        CellOutput::new_builder()
+        packed::CellOutput::new_builder()
             .capacity(500u64.pack())
             .lock(lock_script)
             .build(),
@@ -59,6 +59,7 @@ fn test_success() {
         .input(input)
         .outputs(outputs)
         .outputs_data(outputs_data.pack())
+        .cell_dep(auth_libecc_cell_dep)
         .build();
     let tx = context.complete_tx(tx);
 
@@ -67,53 +68,4 @@ fn test_success() {
         .verify_tx(&tx, MAX_CYCLES)
         .expect("pass verification");
     println!("consume cycles: {}", cycles);
-}
-
-#[test]
-fn test_empty_args() {
-    // deploy contract
-    let mut context = Context::default();
-    let contract_bin: Bytes = Loader::default().load_binary("joyid-cobuild-poc");
-    let out_point = context.deploy_cell(contract_bin);
-
-    // prepare scripts
-    let lock_script = context
-        .build_script(&out_point, Default::default())
-        .expect("script");
-
-    // prepare cells
-    let input_out_point = context.create_cell(
-        CellOutput::new_builder()
-            .capacity(1000u64.pack())
-            .lock(lock_script.clone())
-            .build(),
-        Bytes::new(),
-    );
-    let input = CellInput::new_builder()
-        .previous_output(input_out_point)
-        .build();
-    let outputs = vec![
-        CellOutput::new_builder()
-            .capacity(500u64.pack())
-            .lock(lock_script.clone())
-            .build(),
-        CellOutput::new_builder()
-            .capacity(500u64.pack())
-            .lock(lock_script)
-            .build(),
-    ];
-
-    let outputs_data = vec![Bytes::new(); 2];
-
-    // build transaction
-    let tx = TransactionBuilder::default()
-        .input(input)
-        .outputs(outputs)
-        .outputs_data(outputs_data.pack())
-        .build();
-    let tx = context.complete_tx(tx);
-
-    // run
-    let err = context.verify_tx(&tx, MAX_CYCLES).unwrap_err();
-    assert_script_error(err, ERROR_EMPTY_ARGS);
 }
