@@ -1,5 +1,5 @@
 [package]
-name = "ckb-dao-cobuild-type-script"
+name = "joyid-cobuild-poc"
 version = "0.1.0"
 edition = "2021"
 

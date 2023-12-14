@@ -30,13 +30,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
-name = "ckb-dao-cobuild-type-script"
-version = "0.1.0"
-dependencies = [
- "ckb-std",
-]
-
-[[package]]
 name = "ckb-standalone-types"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -56,6 +49,13 @@ dependencies = [
  "buddy-alloc",
  "cc",
  "ckb-standalone-types",
+]
+
+[[package]]
+name = "joyid-cobuild-poc"
+version = "0.1.0"
+dependencies = [
+ "ckb-std",
 ]
 
 [[package]]

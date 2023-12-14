@@ -9,5 +9,5 @@ version = "0.10.2"
 deployment = "deployment.toml"
 
 [[contracts]]
-name = "ckb-dao-cobuild-type-script"
+name = "joyid-cobuild-poc"
 template_type = "Rust"
