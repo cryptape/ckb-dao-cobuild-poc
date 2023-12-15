@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@joyid/ckb':
+    specifier: ^0.0.2
+    version: 0.0.2
   flowbite:
     specifier: ^2.2.0
     version: 2.2.0
@@ -494,6 +497,10 @@ packages:
       long: 5.2.3
       protobufjs: 7.2.5
       yargs: 17.7.2
+    dev: false
+
+  /@joyid/ckb@0.0.2:
+    resolution: {integrity: sha512-/dJhNowXhIX5FsyRsX5nk6ud7VzQUldLs7/gCkW2J8RtxwWF0RMULuFIkQDGdorfL7dpTG76WCbOCugzWLH6ww==}
     dev: false
 
   /@jridgewell/gen-mapping@0.3.3:
