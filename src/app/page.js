@@ -21,9 +21,7 @@ export default function Home() {
 
   const onSign = async () => {
     const res = await wallet.sign("hello");
-    if (res) {
-      console.log(`Sign message result: ${res}`);
-    }
+    console.log(res);
   };
 
   return (
