@@ -6,6 +6,35 @@ use p256::ecdsa::{signature::Verifier, Signature, VerifyingKey};
 
 use crate::error::Error;
 
+// This is a lock that supports signing in JoyID via @joyid/ckb signChallenge method.
+//
+//     https://docs.joy.id/guide/ckb/sign-message
+//
+// ## Script Args
+//
+// Args is the first 20 bytes of the publick key hash. The hash algorithm is ckbhash, a.k.a,
+// blake2b 256 with personalization "ckb-default-hash". The input is the raw bytes of ecdsa public
+// keys, in another words, the uncompressed sec1 bytes without the first byte flag `0x04`.
+//
+// ## Seal
+//
+// The script supports both WithnessArgs and Co-Build layout. For both layouts, the seal structure
+// is identical:
+//
+// - pubkey: 64 bytes. Raw bytes of the ecdsa public key (uncompressed sec1 without the flag byte).
+// - signature: 64 bytes. The raw signature bytes.
+// - message: the binary decoded from the `message` field returned from `signChallenge`.
+//
+// The layout determins where the seal is stored and what is the challenge passed to
+// the JoyID API `signChallenge`.
+//
+// In the WitnessArgs layout, seal is stored in the witness at the same position as the first input
+// cell in the script group. The witness is a serialized molecule WitnessArgs, and the seal is
+// stored as the `lock` field. The challenge is the sighash same as in the system secp256k1
+// lock.
+//
+// In the Co-Build layout, seal is stored in the `seal` field of `SighashAll` or `SighashAllOnly`.
+// The challenge is the `message_digest` by combining skeleton hash and the typed message hash.
 pub fn main() -> Result<(), Error> {
     let message = [
         0x2bu8, 0x8bu8, 0x05u8, 0xe1u8, 0xf0u8, 0x30u8, 0x3eu8, 0xfbu8, 0x89u8, 0x8fu8, 0xe4u8,
