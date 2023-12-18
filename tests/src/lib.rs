@@ -69,12 +69,19 @@ impl Loader {
     }
 }
 
-pub fn assert_script_error(err: Error, err_code: i8) {
-    let error_string = err.to_string();
-    assert!(
-        error_string.contains(format!("error code {} ", err_code).as_str()),
-        "error_string: {}, expected_error_code: {}",
-        error_string,
-        err_code
-    );
+pub fn assert_script_error(err_opt: Option<Error>, err_code: i8) {
+    match err_opt {
+        Some(err) => {
+            let error_string = err.to_string();
+            assert!(
+                error_string.contains(format!("error code {} ", err_code).as_str()),
+                "error_string: {}, expected_error_code: {}",
+                error_string,
+                err_code
+            );
+        }
+        None => {
+            panic!("error: None, expected_error_code: {}", err_code);
+        }
+    }
 }

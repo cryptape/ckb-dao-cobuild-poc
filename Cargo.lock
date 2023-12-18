@@ -9,10 +9,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4c7f02d4ea65f2c1853089ffd8d2787bdbc63de2f0d29dedbcf8ccdfa0ccd4cf"
 
 [[package]]
+name = "base64"
+version = "0.21.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "35636a1494ede3b646cc98f74f8e62c773a38a659ebc777a2cf26b9b74171df9"
+
+[[package]]
 name = "blake2b-ref"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "294d17c72e0ba59fad763caa112368d0672083779cdebbb97164f4bb4c1e339a"
+
+[[package]]
+name = "blake2b-rs"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a89a8565807f21b913288968e391819e7f9b2f0f46c7b89549c051cccf3a2771"
+dependencies = [
+ "cc",
+ "cty",
+]
 
 [[package]]
 name = "block-buffer"
@@ -45,6 +61,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "ckb-auth-rs"
+version = "0.1.0"
+source = "git+https://github.com/nervosnetwork/ckb-auth.git#cb41284eeadf7bfe57b34d7f7ecedf280babe1b5"
+dependencies = [
+ "blake2b-rs",
+ "ckb-std",
+ "hex",
+]
+
+[[package]]
 name = "ckb-standalone-types"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -64,6 +90,16 @@ dependencies = [
  "buddy-alloc",
  "cc",
  "ckb-standalone-types",
+]
+
+[[package]]
+name = "ckb-transaction-cobuild"
+version = "0.1.0"
+source = "git+https://github.com/cryptape/ckb-transaction-cobuild-poc.git#f8bb30677e2a50f6952dc27aa5ebe7de608c00b7"
+dependencies = [
+ "blake2b-ref",
+ "ckb-std",
+ "molecule",
 ]
 
 [[package]]
@@ -102,6 +138,12 @@ dependencies = [
  "generic-array",
  "typenum",
 ]
+
+[[package]]
+name = "cty"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b365fabc795046672053e29c954733ec3b05e4be654ab130fe8f1f94d7051f35"
 
 [[package]]
 name = "der"
@@ -189,6 +231,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "hex"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
+
+[[package]]
 name = "hmac"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -201,8 +249,13 @@ dependencies = [
 name = "joyid-cobuild-poc"
 version = "0.1.0"
 dependencies = [
+ "base64",
+ "blake2b-rs",
+ "ckb-auth-rs",
  "ckb-std",
+ "ckb-transaction-cobuild",
  "p256",
+ "sha2",
 ]
 
 [[package]]

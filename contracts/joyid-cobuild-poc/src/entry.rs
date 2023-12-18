@@ -1,8 +1,18 @@
-// Import from `core` instead of from `std` since we are in no-std mode
-use core::result::Result;
+use ckb_std::{
+    ckb_constants::Source,
+    ckb_types::{bytes::Bytes, prelude::*},
+    debug,
+    high_level::{load_script, load_witness_args},
+};
 
-use ckb_std::debug;
+use alloc::vec::Vec;
+use base64::{engine::general_purpose, Engine as _};
+use blake2b_rs::Blake2bBuilder;
+use ckb_auth_rs::generate_sighash_all;
+use ckb_transaction_cobuild::parse_message;
+use core::result::Result;
 use p256::ecdsa::{signature::Verifier, Signature, VerifyingKey};
+use sha2::{Digest as _, Sha256};
 
 use crate::error::Error;
 
@@ -36,45 +46,172 @@ use crate::error::Error;
 // In the Co-Build layout, seal is stored in the `seal` field of `SighashAll` or `SighashAllOnly`.
 // The challenge is the `message_digest` by combining skeleton hash and the typed message hash.
 pub fn main() -> Result<(), Error> {
-    let message = [
-        0x2bu8, 0x8bu8, 0x05u8, 0xe1u8, 0xf0u8, 0x30u8, 0x3eu8, 0xfbu8, 0x89u8, 0x8fu8, 0xe4u8,
-        0xd6u8, 0xdeu8, 0x60u8, 0x11u8, 0x98u8, 0xc7u8, 0xa7u8, 0xb8u8, 0x64u8, 0xabu8, 0xbeu8,
-        0x6au8, 0x21u8, 0xc7u8, 0x3bu8, 0x2eu8, 0x78u8, 0x7eu8, 0x18u8, 0x7cu8, 0x52u8, 0x05u8,
-        0x00u8, 0x00u8, 0x00u8, 0x00u8, 0x38u8, 0x48u8, 0x94u8, 0x41u8, 0x8cu8, 0xe0u8, 0x02u8,
-        0x76u8, 0x9eu8, 0x96u8, 0xffu8, 0x7du8, 0x67u8, 0x03u8, 0xfcu8, 0xe9u8, 0xb5u8, 0xbau8,
-        0x98u8, 0xb5u8, 0x6au8, 0xabu8, 0x18u8, 0x13u8, 0x49u8, 0xeeu8, 0xd4u8, 0x02u8, 0x14u8,
-        0x6au8, 0x3eu8, 0x81u8,
-    ];
-    let pubkey = [
-        0x04u8, 0x35u8, 0x38u8, 0xdfu8, 0xd5u8, 0x3au8, 0xd9u8, 0x3du8, 0x2eu8, 0x0au8, 0x6eu8,
-        0x7fu8, 0x47u8, 0x02u8, 0x95u8, 0xdcu8, 0xd7u8, 0x10u8, 0x57u8, 0xd8u8, 0x25u8, 0xe1u8,
-        0xf8u8, 0x72u8, 0x29u8, 0xe5u8, 0xafu8, 0xe2u8, 0xa9u8, 0x06u8, 0xaau8, 0x7cu8, 0xfcu8,
-        0x09u8, 0x9fu8, 0xdfu8, 0xa0u8, 0x44u8, 0x42u8, 0xdau8, 0xc3u8, 0x35u8, 0x48u8, 0xb6u8,
-        0x98u8, 0x8au8, 0xf8u8, 0xafu8, 0x58u8, 0xd2u8, 0x05u8, 0x25u8, 0x29u8, 0x08u8, 0x8fu8,
-        0x7bu8, 0x73u8, 0xefu8, 0x00u8, 0x80u8, 0x0fu8, 0x7fu8, 0xbcu8, 0xddu8, 0xb3u8,
-    ];
-    let signature = [
-        0xbeu8, 0xdeu8, 0xa4u8, 0x3au8, 0x55u8, 0x18u8, 0x5fu8, 0x12u8, 0xb4u8, 0x58u8, 0xecu8,
-        0x3eu8, 0xc5u8, 0x90u8, 0x98u8, 0x6eu8, 0x8cu8, 0x79u8, 0x8fu8, 0xe2u8, 0x63u8, 0x64u8,
-        0x24u8, 0xb1u8, 0x28u8, 0x55u8, 0xd2u8, 0x1eu8, 0x94u8, 0xb1u8, 0x87u8, 0xa8u8, 0x74u8,
-        0xebu8, 0x37u8, 0x04u8, 0x47u8, 0x18u8, 0x63u8, 0xd9u8, 0x15u8, 0xb6u8, 0xe2u8, 0xcau8,
-        0xe9u8, 0x32u8, 0xadu8, 0x60u8, 0xddu8, 0xd2u8, 0xbdu8, 0x13u8, 0x02u8, 0xebu8, 0xbdu8,
-        0x11u8, 0x6fu8, 0xa1u8, 0xb3u8, 0x39u8, 0x64u8, 0x61u8, 0x80u8, 0x8du8,
-    ];
+    let script = load_script()?;
+    let args: Bytes = script.args().unpack();
 
-    let verifying_key = VerifyingKey::from_sec1_bytes(&pubkey).map_err(|err| {
+    let (challenge, seal) = match parse_message() {
+        Ok(cobuild_layout) => cobuild_layout,
+        Err(err) => {
+            debug!("co-build parse error: {:?}", err);
+            parse_witness_args()?
+        }
+    };
+    verify(args, challenge, seal)
+}
+
+fn parse_witness_args() -> Result<([u8; 32], Vec<u8>), Error> {
+    let sighash = generate_sighash_all().map_err(|err| {
+        debug!("WitnessLayoutError: generate_sighash_all {:?}", err);
+        Error::WitnessLayoutError
+    })?;
+    let witness_args = load_witness_args(0, Source::GroupInput)?;
+    let seal: Vec<u8> = witness_args
+        .lock()
+        .to_opt()
+        .ok_or(Error::WitnessLayoutError)?
+        .raw_data()
+        .to_vec();
+
+    Ok((sighash, seal))
+}
+
+const PUBKEY_HASH_SIZE: usize = 20;
+
+const PUBKEY_POS: usize = 0;
+const PUBKEY_SIZE: usize = 64;
+const SIGNATURE_POS: usize = PUBKEY_POS + PUBKEY_SIZE;
+const SIGNATURE_SIZE: usize = 64;
+const AUTHENTICATOR_DATA_POS: usize = SIGNATURE_POS + SIGNATURE_SIZE;
+const AUTHENTICATOR_DATA_SIZE: usize = 37;
+const CLIENT_DATA_POS: usize = AUTHENTICATOR_DATA_POS + AUTHENTICATOR_DATA_SIZE;
+const MIN_SEAL_SIZE: usize = CLIENT_DATA_POS + 1;
+
+fn parse_pubkey(pubkey_slice: &[u8]) -> Result<VerifyingKey, Error> {
+    let mut sec1 = Vec::with_capacity(PUBKEY_SIZE + 1);
+    sec1.push(0x04u8);
+    sec1.extend_from_slice(pubkey_slice);
+    VerifyingKey::from_sec1_bytes(&sec1).map_err(|err| {
         debug!("PublicKeyFormatError: {}", err);
         Error::PublicKeyFormatError
-    })?;
-    let signature = Signature::from_slice(&signature).map_err(|err| {
+    })
+}
+
+fn parse_signature(signature_slice: &[u8]) -> Result<Signature, Error> {
+    Signature::from_slice(signature_slice).map_err(|err| {
         debug!("SignatureFormatError: {}", err);
         Error::SignatureFormatError
-    })?;
+    })
+}
 
-    verifying_key.verify(&message, &signature).map_err(|err| {
+const CLIENT_DATA_START_CHAR: u8 = '{' as u8;
+const CLIENT_DATA_QUOTE_CHAR: u8 = '"' as u8;
+// ,"challenge":
+const CHALLENGE_PREFIX: [u8; 13] = [
+    0x2cu8, 0x22u8, 0x63u8, 0x68u8, 0x61u8, 0x6cu8, 0x6cu8, 0x65u8, 0x6eu8, 0x67u8, 0x65u8, 0x22u8,
+    0x3au8,
+];
+
+fn parse_challenge(client_data_slice: &[u8]) -> Result<[u8; 32], Error> {
+    let prefix_pos = client_data_slice
+        .windows(CHALLENGE_PREFIX.len())
+        .position(|window| window == CHALLENGE_PREFIX)
+        .ok_or_else(|| {
+            debug!("ClientDataFormatError: prefix not found");
+            Error::ClientDataFormatError
+        })?;
+
+    let start_quote_pos = prefix_pos + CHALLENGE_PREFIX.len();
+    if client_data_slice.get(start_quote_pos).copied().unwrap_or(0) != CLIENT_DATA_QUOTE_CHAR {
+        debug!("ClientDataFormatError: start quote not found");
+        return Err(Error::ClientDataFormatError);
+    }
+
+    let end_quote_pos = client_data_slice[start_quote_pos + 1..]
+        .iter()
+        .position(|char| *char == CLIENT_DATA_QUOTE_CHAR)
+        .ok_or_else(|| {
+            debug!("ClientDataFormatError: end quote not found");
+            Error::ClientDataFormatError
+        })?;
+
+    let challenge_base64 = &client_data_slice[start_quote_pos + 1..end_quote_pos];
+
+    let mut challenge = [0u8; 32];
+
+    if let Err(err) =
+        general_purpose::URL_SAFE_NO_PAD.decode_slice(challenge_base64, &mut challenge)
+    {
+        debug!("ClientDataFormatError: base64 decode error {}", err);
+        return Err(Error::ClientDataFormatError);
+    }
+
+    Ok(challenge)
+}
+
+const SHA256_BLOCK_SIZE: usize = 32;
+
+fn prepare_message(
+    authenticator_data_slice: &[u8],
+    client_data_slice: &[u8],
+) -> Result<Vec<u8>, Error> {
+    let mut message = Vec::with_capacity(AUTHENTICATOR_DATA_SIZE + SHA256_BLOCK_SIZE);
+    message.extend_from_slice(authenticator_data_slice);
+
+    let mut hasher = Sha256::new();
+    hasher.update(client_data_slice);
+    let client_data_hash = hasher.finalize();
+    message.extend_from_slice(&client_data_hash);
+
+    Ok(message)
+}
+
+fn pubkey_hash_equal(pubkey_hash_slice: &[u8], pubkey_slice: &[u8]) -> bool {
+    let computed_pubkey_hash = ckbhash(pubkey_slice);
+    return &computed_pubkey_hash == pubkey_hash_slice;
+}
+
+fn verify(args: Bytes, challenge: [u8; 32], seal: Vec<u8>) -> Result<(), Error> {
+    if seal.len() < MIN_SEAL_SIZE || seal[CLIENT_DATA_POS] != CLIENT_DATA_START_CHAR {
+        return Err(Error::SealFormatError);
+    }
+
+    let pubkey_hash_slice = &args[..PUBKEY_HASH_SIZE];
+    let pubkey_slice = &seal[PUBKEY_POS..(PUBKEY_POS + PUBKEY_SIZE)];
+    if !pubkey_hash_equal(pubkey_hash_slice, pubkey_slice) {
+        debug!("PublicKeyHashUnmatchError");
+        return Err(Error::PublicKeyHashUnmatchError);
+    }
+
+    let signature_slice = &seal[SIGNATURE_POS..(SIGNATURE_POS + SIGNATURE_SIZE)];
+    let authenticator_data_slice =
+        &seal[AUTHENTICATOR_DATA_POS..(AUTHENTICATOR_DATA_POS + AUTHENTICATOR_DATA_SIZE)];
+    let client_data_slice = &seal[CLIENT_DATA_POS..];
+
+    let pubkey = parse_pubkey(pubkey_slice)?;
+    let signature = parse_signature(signature_slice)?;
+
+    if parse_challenge(&client_data_slice)? != challenge {
+        debug!("ChallengeUnmatchError");
+        return Err(Error::ChallengeUnmatchError);
+    }
+
+    let message = prepare_message(authenticator_data_slice, client_data_slice)?;
+
+    pubkey.verify(&message, &signature).map_err(|err| {
         debug!("SignatureVerifyingError: {}", err);
         Error::SignatureVerifyingError
     })?;
 
     Ok(())
+}
+
+pub const CKB_PERSONALIZATION: &[u8] = b"ckb-default-hash";
+pub fn ckbhash(data: &[u8]) -> [u8; 32] {
+    let mut hasher = Blake2bBuilder::new(32)
+        .personal(CKB_PERSONALIZATION)
+        .build();
+    hasher.update(data);
+    let mut hash = [0u8; 32];
+    hasher.finalize(&mut hash);
+    hash
 }

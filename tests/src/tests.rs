@@ -2,6 +2,8 @@ use super::*;
 use ckb_testtool::ckb_types::{bytes::Bytes, core::TransactionBuilder, packed, prelude::*};
 use ckb_testtool::context::Context;
 
+include!("../../contracts/joyid-cobuild-poc/src/error_include.rs");
+
 const MAX_CYCLES: u64 = 120_000_000;
 
 fn deploy_joyid_cobuild_poc(context: &mut Context) -> packed::OutPoint {
@@ -10,7 +12,7 @@ fn deploy_joyid_cobuild_poc(context: &mut Context) -> packed::OutPoint {
 }
 
 #[test]
-fn test_success() {
+fn test_witness_layout_error() {
     // deploy contract
     let mut context = Context::default();
     let joyid_cobuild_poc_out_point = deploy_joyid_cobuild_poc(&mut context);
@@ -53,8 +55,6 @@ fn test_success() {
     let tx = context.complete_tx(tx);
 
     // run
-    let cycles = context
-        .verify_tx(&tx, MAX_CYCLES)
-        .expect("pass verification");
-    println!("consume cycles: {}", cycles);
+    let result = context.verify_tx(&tx, MAX_CYCLES);
+    assert_script_error(result.err(), Error::WitnessLayoutError as i8);
 }

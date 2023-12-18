@@ -8,3 +8,8 @@ edition = "2021"
 [dependencies]
 ckb-std = "0.14.0"
 p256 = { version = "0.13.2", default-features = false, features = ["ecdsa"] }
+sha2 = { version = "0.10", default-features = false }
+base64 = { version = "0.21.5", default-features = false }
+blake2b-rs = "0.2.0"
+ckb-auth-rs = { git = "https://github.com/nervosnetwork/ckb-auth.git" }
+ckb-transaction-cobuild = { git = "https://github.com/cryptape/ckb-transaction-cobuild-poc.git" }
