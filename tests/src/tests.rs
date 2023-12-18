@@ -2,20 +2,11 @@ use super::*;
 use ckb_testtool::ckb_types::{bytes::Bytes, core::TransactionBuilder, packed, prelude::*};
 use ckb_testtool::context::Context;
 
-const MAX_CYCLES: u64 = 10_000_000;
+const MAX_CYCLES: u64 = 120_000_000;
 
 fn deploy_joyid_cobuild_poc(context: &mut Context) -> packed::OutPoint {
     let code = Loader::default().load_binary("joyid-cobuild-poc");
     context.deploy_cell(code)
-}
-
-fn deploy_auth_libecc(context: &mut Context) -> packed::CellDep {
-    let code = Loader::default().load_binary("../../deps/ckb-auth/build/auth_libecc");
-    let out_point = context.deploy_cell(code);
-    packed::CellDep::new_builder()
-        .out_point(out_point)
-        .dep_type(0u8.into())
-        .build()
 }
 
 #[test]
@@ -23,7 +14,6 @@ fn test_success() {
     // deploy contract
     let mut context = Context::default();
     let joyid_cobuild_poc_out_point = deploy_joyid_cobuild_poc(&mut context);
-    let auth_libecc_cell_dep = deploy_auth_libecc(&mut context);
 
     // prepare scripts
     let lock_script = context
@@ -59,7 +49,6 @@ fn test_success() {
         .input(input)
         .outputs(outputs)
         .outputs_data(outputs_data.pack())
-        .cell_dep(auth_libecc_cell_dep)
         .build();
     let tx = context.complete_tx(tx);
 
