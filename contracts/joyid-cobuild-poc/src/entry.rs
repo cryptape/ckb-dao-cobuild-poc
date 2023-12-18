@@ -6,45 +6,17 @@ use ckb_std::{
 };
 
 use alloc::vec::Vec;
-use base64::{engine::general_purpose, Engine as _};
-use blake2b_rs::Blake2bBuilder;
-use ckb_auth_rs::generate_sighash_all;
+use base64ct::{Base64UrlUnpadded, Encoding as _};
+use ckb_hash::blake2b_256;
 use ckb_transaction_cobuild::parse_message;
 use core::result::Result;
 use p256::ecdsa::{signature::Verifier, Signature, VerifyingKey};
 use sha2::{Digest as _, Sha256};
 
 use crate::error::Error;
+use crate::generate_sighash_all::generate_sighash_all;
 
-// This is a lock that supports signing in JoyID via @joyid/ckb signChallenge method.
-//
-//     https://docs.joy.id/guide/ckb/sign-message
-//
-// ## Script Args
-//
-// Args is the first 20 bytes of the publick key hash. The hash algorithm is ckbhash, a.k.a,
-// blake2b 256 with personalization "ckb-default-hash". The input is the raw bytes of ecdsa public
-// keys, in another words, the uncompressed sec1 bytes without the first byte flag `0x04`.
-//
-// ## Seal
-//
-// The script supports both WithnessArgs and Co-Build layout. For both layouts, the seal structure
-// is identical:
-//
-// - pubkey: 64 bytes. Raw bytes of the ecdsa public key (uncompressed sec1 without the flag byte).
-// - signature: 64 bytes. The raw signature bytes.
-// - message: the binary decoded from the `message` field returned from `signChallenge`.
-//
-// The layout determins where the seal is stored and what is the challenge passed to
-// the JoyID API `signChallenge`.
-//
-// In the WitnessArgs layout, seal is stored in the witness at the same position as the first input
-// cell in the script group. The witness is a serialized molecule WitnessArgs, and the seal is
-// stored as the `lock` field. The challenge is the sighash same as in the system secp256k1
-// lock.
-//
-// In the Co-Build layout, seal is stored in the `seal` field of `SighashAll` or `SighashAllOnly`.
-// The challenge is the `message_digest` by combining skeleton hash and the typed message hash.
+// See README.md
 pub fn main() -> Result<(), Error> {
     let script = load_script()?;
     let args: Bytes = script.args().unpack();
@@ -60,10 +32,8 @@ pub fn main() -> Result<(), Error> {
 }
 
 fn parse_witness_args() -> Result<([u8; 32], Vec<u8>), Error> {
-    let sighash = generate_sighash_all().map_err(|err| {
-        debug!("WitnessLayoutError: generate_sighash_all {:?}", err);
-        Error::WitnessLayoutError
-    })?;
+    let sighash = generate_sighash_all()?;
+    debug!("sighash {:?}", sighash);
     let witness_args = load_witness_args(0, Source::GroupInput)?;
     let seal: Vec<u8> = witness_args
         .lock()
@@ -126,22 +96,33 @@ fn parse_challenge(client_data_slice: &[u8]) -> Result<[u8; 32], Error> {
         return Err(Error::ClientDataFormatError);
     }
 
-    let end_quote_pos = client_data_slice[start_quote_pos + 1..]
+    let client_data_pos = start_quote_pos + 1;
+    let end_quote_pos = client_data_slice[client_data_pos..]
         .iter()
         .position(|char| *char == CLIENT_DATA_QUOTE_CHAR)
         .ok_or_else(|| {
             debug!("ClientDataFormatError: end quote not found");
             Error::ClientDataFormatError
-        })?;
+        })?
+        + client_data_pos;
 
-    let challenge_base64 = &client_data_slice[start_quote_pos + 1..end_quote_pos];
+    let challenge_base64 = &client_data_slice[client_data_pos..end_quote_pos];
 
-    let mut challenge = [0u8; 32];
-
-    if let Err(err) =
-        general_purpose::URL_SAFE_NO_PAD.decode_slice(challenge_base64, &mut challenge)
-    {
+    // base64 decode
+    let mut challenge_hex = [0u8; 64];
+    if let Err(err) = Base64UrlUnpadded::decode(challenge_base64, &mut challenge_hex) {
         debug!("ClientDataFormatError: base64 decode error {}", err);
+        return Err(Error::ClientDataFormatError);
+    }
+    debug!(
+        "challenge={}",
+        core::str::from_utf8(&challenge_hex).unwrap_or_default()
+    );
+
+    // hex decode
+    let mut challenge = [0u8; 32];
+    if let Err(err) = base16ct::lower::decode(challenge_hex, &mut challenge) {
+        debug!("ClientDataFormatError: hex decode error {}", err);
         return Err(Error::ClientDataFormatError);
     }
 
@@ -166,12 +147,24 @@ fn prepare_message(
 }
 
 fn pubkey_hash_equal(pubkey_hash_slice: &[u8], pubkey_slice: &[u8]) -> bool {
-    let computed_pubkey_hash = ckbhash(pubkey_slice);
-    return &computed_pubkey_hash == pubkey_hash_slice;
+    let computed_pubkey_hash = blake2b_256(pubkey_slice);
+    return &computed_pubkey_hash[..PUBKEY_HASH_SIZE] == pubkey_hash_slice;
 }
 
 fn verify(args: Bytes, challenge: [u8; 32], seal: Vec<u8>) -> Result<(), Error> {
-    if seal.len() < MIN_SEAL_SIZE || seal[CLIENT_DATA_POS] != CLIENT_DATA_START_CHAR {
+    if seal.len() < MIN_SEAL_SIZE {
+        debug!(
+            "seal len {} is less than MIN_SEAL_SIZE {}",
+            seal.len(),
+            MIN_SEAL_SIZE
+        );
+        return Err(Error::SealFormatError);
+    }
+    if seal[CLIENT_DATA_POS] != CLIENT_DATA_START_CHAR {
+        debug!(
+            "client data at {} must be {{ but is {}",
+            CLIENT_DATA_POS, seal[CLIENT_DATA_POS]
+        );
         return Err(Error::SealFormatError);
     }
 
@@ -203,15 +196,4 @@ fn verify(args: Bytes, challenge: [u8; 32], seal: Vec<u8>) -> Result<(), Error> 
     })?;
 
     Ok(())
-}
-
-pub const CKB_PERSONALIZATION: &[u8] = b"ckb-default-hash";
-pub fn ckbhash(data: &[u8]) -> [u8; 32] {
-    let mut hasher = Blake2bBuilder::new(32)
-        .personal(CKB_PERSONALIZATION)
-        .build();
-    hasher.update(data);
-    let mut hash = [0u8; 32];
-    hasher.finalize(&mut hash);
-    hash
 }

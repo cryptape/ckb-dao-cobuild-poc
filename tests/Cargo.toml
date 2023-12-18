@@ -7,3 +7,8 @@ edition = "2021"
 
 [dependencies]
 ckb-testtool = "0.10"
+blake2b-rs = "0.2.0"
+ckb-hash = "0.112.1"
+hex-literal = "0.4.1"
+base64ct = { version = "1.6.0", features = ["std"] }
+p256 = { version = "0.13.2", features = ["ecdsa"] }
