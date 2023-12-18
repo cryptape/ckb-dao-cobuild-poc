@@ -1,3 +1,0 @@
-[submodule "deps/ckb-auth"]
-	path = deps/ckb-auth
-	url = https://github.com/nervosnetwork/ckb-auth.git
