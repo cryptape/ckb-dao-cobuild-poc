@@ -28,12 +28,12 @@ pub fn main() -> Result<(), Error> {
             parse_witness_args()?
         }
     };
+    debug!("challenge {:?}", challenge);
     verify(args, challenge, seal)
 }
 
 fn parse_witness_args() -> Result<([u8; 32], Vec<u8>), Error> {
     let sighash = generate_sighash_all()?;
-    debug!("sighash {:?}", sighash);
     let witness_args = load_witness_args(0, Source::GroupInput)?;
     let seal: Vec<u8> = witness_args
         .lock()

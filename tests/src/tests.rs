@@ -4,6 +4,7 @@ use ckb_testtool::{
     ckb_types::{bytes::Bytes, core::TransactionBuilder, packed},
     context::Context,
 };
+use ckb_transaction_cobuild::schemas::{basic::SighashAll, top_level::WitnessLayout};
 use hex_literal::hex;
 use p256::ecdsa::Signature;
 
@@ -82,8 +83,7 @@ fn test_witness_layout_error() {
 
 #[test]
 fn test_witness_args_layout() {
-    // This is the response from @joyid/ckb signChallenge by signing the challenge
-    // eb97071b64e5ce0ebd3f46e63764920ae5f7b2093c90301d6bddfaf6ef50e91e
+    // This is the response from @joyid/ckb signChallenge
     // {
     //   "signature": "MEUCIQCnxv2O4YZpIo5XATUokJA3t87sopvX0EwWMsy13Z1rogIgSHBHtyMYP4_vh5i4Pof5CKaL7RiGAGfGjwiBHyR0_vg",
     //   "message": "K4sF4fAwPvuJj-TW3mARmMenuGSrvmohxzsueH4YfFIFAAAAAHsidHlwZSI6IndlYmF1dGhuLmdldCIsImNoYWxsZW5nZSI6IlpXSTVOekEzTVdJMk5HVTFZMlV3WldKa00yWTBObVUyTXpjMk5Ea3lNR0ZsTldZM1lqSXdPVE5qT1RBek1ERmtObUprWkdaaFpqWmxaalV3WlRreFpRIiwib3JpZ2luIjoiaHR0cHM6Ly90ZXN0bmV0LmpveWlkLmRldiIsImNyb3NzT3JpZ2luIjpmYWxzZX0",
@@ -114,14 +114,73 @@ fn test_witness_args_layout() {
         .build();
     let tx = context.complete_tx(tx);
 
-    let sighash = compute_sighash(&tx, vec![0]);
-    println!("sighash: {:?}", sighash);
-    print!("sighash: ");
-    for char in sighash {
+    let challenge = compute_sighash(&tx, vec![0]);
+    println!("challenge: {:?}", challenge);
+    print!("challenge: ");
+    for char in challenge {
         print!("{:02x}", char);
     }
     println!();
     // => eb97071b64e5ce0ebd3f46e63764920ae5f7b2093c90301d6bddfaf6ef50e91e
+
+    // run
+    let result = context.verify_tx(&tx, MAX_CYCLES);
+    assert_script_ok(result);
+}
+
+// The ckb_testtool::ckb_types::packed::Bytes and
+// ckb_transaction_cobuild::schemas::blockchain::Bytes are different types, although they are both
+// generated from the same molecule schema.
+fn pack_cobuild_bytes(bytes: Bytes) -> ckb_transaction_cobuild::schemas::blockchain::Bytes {
+    ckb_transaction_cobuild::schemas::blockchain::Bytes::new_builder()
+        .set(bytes.iter().map(|f| f.clone().into()).collect())
+        .build()
+}
+
+#[test]
+fn test_cobuild_layout() {
+    // This is the response from @joyid/ckb signChallenge
+    // {
+    //   "signature": "MEUCIQC2jCmddC5QuCmWZbFvn2AObrgK6rZk4F2oUVOpLK-MaQIgYra8XEok4tPvp64tGzj2unkmB-qyIDG3Hf1L5TEWD9E",
+    //   "message": "K4sF4fAwPvuJj-TW3mARmMenuGSrvmohxzsueH4YfFIFAAAAAHsidHlwZSI6IndlYmF1dGhuLmdldCIsImNoYWxsZW5nZSI6IllXVmtNbUprTW1JMVptSXpaRFU1TmpkbVl6QmxZamM1TW1FeE5HVTBZems0TUdVNU5tUTJaRFV4Tmprd00yRTBPRGd4TVROak5tUXlNV0V6WlRBMFlRIiwib3JpZ2luIjoiaHR0cHM6Ly90ZXN0bmV0LmpveWlkLmRldiIsImNyb3NzT3JpZ2luIjpmYWxzZX0",
+    //   "challenge": "aed2bd2b5fb3d5967fc0eb792a14e4c980e96d6d516903a488113c6d21a3e04a",
+    //   "alg": -7,
+    //   "pubkey": "3538dfd53ad93d2e0a6e7f470295dcd71057d825e1f87229e5afe2a906aa7cfc099fdfa04442dac33548b6988af8af58d2052529088f7b73ef00800f7fbcddb3",
+    //   "keyType": "main_key"
+    // }
+    let pubkey = hex!("3538dfd53ad93d2e0a6e7f470295dcd71057d825e1f87229e5afe2a906aa7cfc099fdfa04442dac33548b6988af8af58d2052529088f7b73ef00800f7fbcddb3");
+    let signature = Signature::from_der(&Base64UrlUnpadded::decode_vec("MEUCIQC2jCmddC5QuCmWZbFvn2AObrgK6rZk4F2oUVOpLK-MaQIgYra8XEok4tPvp64tGzj2unkmB-qyIDG3Hf1L5TEWD9E").expect("decode signature")).expect("decode signature").to_bytes();
+    let message = Base64UrlUnpadded::decode_vec("K4sF4fAwPvuJj-TW3mARmMenuGSrvmohxzsueH4YfFIFAAAAAHsidHlwZSI6IndlYmF1dGhuLmdldCIsImNoYWxsZW5nZSI6IllXVmtNbUprTW1JMVptSXpaRFU1TmpkbVl6QmxZamM1TW1FeE5HVTBZems0TUdVNU5tUTJaRFV4Tmprd00yRTBPRGd4TVROak5tUXlNV0V6WlRBMFlRIiwib3JpZ2luIjoiaHR0cHM6Ly90ZXN0bmV0LmpveWlkLmRldiIsImNyb3NzT3JpZ2luIjpmYWxzZX0").expect("decode message");
+    let mut seal = Vec::with_capacity(pubkey.len() + signature.len() + message.len());
+    seal.extend_from_slice(&pubkey);
+    seal.extend_from_slice(&signature);
+    seal.extend_from_slice(&message);
+
+    // ckb-cli util blake2b --binary-hex 0x3538dfd53ad93d2e0a6e7f470295dcd71057d825e1f87229e5afe2a906aa7cfc099fdfa04442dac33548b6988af8af58d2052529088f7b73ef00800f7fbcddb3 --prefix-160
+    // 0xac4fb598d2e089e62406707d1aee4a27219515cc
+    let pubkey_hash = hex!("ac4fb598d2e089e62406707d1aee4a27219515cc");
+
+    let mut context = Context::default();
+    let witness_layout = WitnessLayout::new_builder()
+        .set(
+            SighashAll::new_builder()
+                .seal(pack_cobuild_bytes(Bytes::from(seal)))
+                .build(),
+        )
+        .build();
+    let tx = base_transaction_builder(&mut context, Bytes::from(pubkey_hash.to_vec()))
+        .witness(witness_layout.as_bytes().pack())
+        .build();
+    let tx = context.complete_tx(tx);
+
+    let challenge = compute_message_digest(&tx, 0);
+    println!("challenge: {:?}", challenge);
+    print!("challenge: ");
+    for char in challenge {
+        print!("{:02x}", char);
+    }
+    println!();
+    // => aed2bd2b5fb3d5967fc0eb792a14e4c980e96d6d516903a488113c6d21a3e04a
 
     // run
     let result = context.verify_tx(&tx, MAX_CYCLES);

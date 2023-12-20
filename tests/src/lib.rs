@@ -3,6 +3,7 @@ use ckb_testtool::{
     ckb_error::Error,
     ckb_types::{bytes::Bytes, core::TransactionView, packed, prelude::*},
 };
+use ckb_transaction_cobuild::schemas::top_level::{WitnessLayout, WitnessLayoutUnion};
 use std::env;
 use std::fs;
 use std::path::PathBuf;
@@ -138,4 +139,48 @@ pub fn compute_sighash(tx: &TransactionView, lock_group_indices: Vec<usize>) -> 
 
     blake2b.finalize(&mut message);
     message
+}
+
+pub fn compute_message_digest(tx: &TransactionView, witness_index: usize) -> [u8; 32] {
+    // Message
+    let message = {
+        let witness = WitnessLayout::new_unchecked(
+            tx.witnesses()
+                .get(witness_index)
+                .expect("get SighashAllWithAction")
+                .raw_data(),
+        );
+        let sighash_all = match witness.to_enum() {
+            WitnessLayoutUnion::SighashAll(sighash_all) => sighash_all,
+            _ => panic!("expect SighashAll"),
+        };
+        sighash_all.message().as_bytes()
+    };
+
+    let mut skeleton_hash = [0u8; 32];
+    {
+        let mut hasher = new_blake2b();
+        hasher.update(tx.hash().as_slice());
+
+        for i in tx.inputs().len()..tx.witnesses().len() {
+            let w = tx.witnesses().get(i).unwrap();
+            let w = w.as_slice()[4..].to_vec();
+
+            hasher.update(&w.len().to_le_bytes());
+            hasher.update(&w);
+        }
+
+        hasher.finalize(&mut skeleton_hash);
+    }
+
+    let mut message_digest = [0u8; 32];
+    {
+        let mut hasher = new_blake2b();
+        hasher.update(&skeleton_hash[..]);
+        hasher.update(&(message.len() as u64).to_le_bytes());
+        hasher.update(&message[..]);
+        hasher.finalize(&mut message_digest);
+    }
+
+    message_digest
 }
