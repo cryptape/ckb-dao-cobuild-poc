@@ -128,13 +128,9 @@ fn test_witness_args_layout() {
     assert_script_ok(result);
 }
 
-// The ckb_testtool::ckb_types::packed::Bytes and
-// ckb_transaction_cobuild::schemas::blockchain::Bytes are different types, although they are both
-// generated from the same molecule schema.
 fn pack_cobuild_bytes(bytes: Bytes) -> ckb_transaction_cobuild::schemas::blockchain::Bytes {
-    ckb_transaction_cobuild::schemas::blockchain::Bytes::new_builder()
-        .set(bytes.iter().map(|f| f.clone().into()).collect())
-        .build()
+    let ckb_std_bytes: packed::Bytes = bytes.pack();
+    ckb_transaction_cobuild::schemas::blockchain::Bytes::new_unchecked(ckb_std_bytes.as_bytes())
 }
 
 #[test]
