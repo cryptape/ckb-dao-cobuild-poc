@@ -73,9 +73,9 @@ fn parse_signature(signature_slice: &[u8]) -> Result<Signature, Error> {
     })
 }
 
-const CLIENT_DATA_START_CHAR: u8 = '{' as u8;
-const CLIENT_DATA_QUOTE_CHAR: u8 = '"' as u8;
-// ,"challenge":
+const CLIENT_DATA_START_CHAR: u8 = b'{';
+const CLIENT_DATA_QUOTE_CHAR: u8 = b'"';
+
 const CHALLENGE_PREFIX: [u8; 13] = [
     0x2cu8, 0x22u8, 0x63u8, 0x68u8, 0x61u8, 0x6cu8, 0x6cu8, 0x65u8, 0x6eu8, 0x67u8, 0x65u8, 0x22u8,
     0x3au8,
@@ -148,7 +148,7 @@ fn prepare_message(
 
 fn pubkey_hash_equal(pubkey_hash_slice: &[u8], pubkey_slice: &[u8]) -> bool {
     let computed_pubkey_hash = blake2b_256(pubkey_slice);
-    return &computed_pubkey_hash[..PUBKEY_HASH_SIZE] == pubkey_hash_slice;
+    &computed_pubkey_hash[..PUBKEY_HASH_SIZE] == pubkey_hash_slice
 }
 
 fn verify(args: Bytes, challenge: [u8; 32], seal: Vec<u8>) -> Result<(), Error> {
@@ -183,7 +183,7 @@ fn verify(args: Bytes, challenge: [u8; 32], seal: Vec<u8>) -> Result<(), Error> 
     let pubkey = parse_pubkey(pubkey_slice)?;
     let signature = parse_signature(signature_slice)?;
 
-    if parse_challenge(&client_data_slice)? != challenge {
+    if parse_challenge(client_data_slice)? != challenge {
         debug!("ChallengeUnmatchError");
         return Err(Error::ChallengeUnmatchError);
     }
