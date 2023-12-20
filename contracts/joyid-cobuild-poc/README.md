@@ -4,6 +4,12 @@ This lock enables signing in JoyID using the @joyid/ckb signChallenge method.
 
 > <https://docs.joy.id/guide/ckb/sign-message>
 
+## ⚠️ Security Warning
+
+This script uses a dependency [p256](https://docs.rs/p256/latest/p256/) which has never been independently audited!
+
+USE AT YOUR OWN RISK!
+
 ## Script Args
 
 The script `args` field is the first 20 bytes of the public key hash. The hash algorithm used is ckb-hash, a.k.a, blake2b 256 with the personalization "ckb-default-hash". The input consists of the uncompressed sec1 bytes of the ecdsa public key, excluding the first byte `0x04`.
