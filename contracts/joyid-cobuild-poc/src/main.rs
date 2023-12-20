@@ -10,6 +10,7 @@
 // define modules
 mod entry;
 mod error;
+mod generate_sighash_all;
 
 #[cfg(test)]
 extern crate alloc;

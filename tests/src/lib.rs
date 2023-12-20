@@ -1,4 +1,9 @@
-use ckb_testtool::{ckb_error::Error, ckb_types::bytes::Bytes};
+use ckb_hash::new_blake2b;
+use ckb_testtool::{
+    ckb_error::Error,
+    ckb_types::{bytes::Bytes, core::TransactionView, packed, prelude::*},
+};
+use ckb_transaction_cobuild::schemas::top_level::{WitnessLayout, WitnessLayoutUnion};
 use std::env;
 use std::fs;
 use std::path::PathBuf;
@@ -67,14 +72,115 @@ impl Loader {
             .expect(&format!("binary at {}", path.display()))
             .into()
     }
+
+    pub fn load_joyid_cobuild_poc_binary(&self) -> Bytes {
+        self.load_binary("joyid-cobuild-poc")
+    }
 }
 
-pub fn assert_script_error(err: Error, err_code: i8) {
-    let error_string = err.to_string();
-    assert!(
-        error_string.contains(format!("error code {} ", err_code).as_str()),
-        "error_string: {}, expected_error_code: {}",
-        error_string,
-        err_code
+pub fn assert_script_ok(result: Result<u64, Error>) {
+    if let Err(err) = result {
+        panic!("expect ok got error: {}", err);
+    }
+}
+
+pub fn assert_script_err_code(result: Result<u64, Error>, err_code: i8) {
+    match result.err() {
+        Some(err) => {
+            let error_string = err.to_string();
+            assert!(
+                error_string.contains(format!("error code {} ", err_code).as_str()),
+                "error_string: {}, expected_error_code: {}",
+                error_string,
+                err_code
+            );
+        }
+        None => {
+            panic!("error: None, expected_error_code: {}", err_code);
+        }
+    }
+}
+
+pub fn compute_sighash(tx: &TransactionView, lock_group_indices: Vec<usize>) -> [u8; 32] {
+    let witness = packed::WitnessArgs::new_unchecked(
+        tx.witnesses()
+            .get(lock_group_indices[0])
+            .expect("get lock group witness")
+            .raw_data(),
     );
+    let witness_for_signing = witness
+        .as_builder()
+        .lock((None as Option<Bytes>).pack())
+        .build()
+        .as_bytes();
+
+    let mut blake2b = new_blake2b();
+    let mut message = [0u8; 32];
+
+    blake2b.update(&tx.hash().raw_data());
+    blake2b.update(&(witness_for_signing.len() as u64).to_le_bytes());
+    blake2b.update(&witness_for_signing);
+
+    // group
+    for i in &lock_group_indices[1..] {
+        let witness = tx.witnesses().get(*i).unwrap();
+
+        blake2b.update(&(witness.len() as u64).to_le_bytes());
+        blake2b.update(&witness.raw_data());
+    }
+
+    let normal_witness_len = std::cmp::max(tx.inputs().len(), tx.outputs().len());
+    for i in tx.inputs().len()..normal_witness_len {
+        let witness = tx.witnesses().get(i).expect("get witness");
+
+        blake2b.update(&(witness.len() as u64).to_le_bytes());
+        blake2b.update(&witness.raw_data());
+    }
+
+    blake2b.finalize(&mut message);
+    message
+}
+
+pub fn compute_message_digest(tx: &TransactionView, witness_index: usize) -> [u8; 32] {
+    // Message
+    let message = {
+        let witness = WitnessLayout::new_unchecked(
+            tx.witnesses()
+                .get(witness_index)
+                .expect("get SighashAllWithAction")
+                .raw_data(),
+        );
+        let sighash_all = match witness.to_enum() {
+            WitnessLayoutUnion::SighashAll(sighash_all) => sighash_all,
+            _ => panic!("expect SighashAll"),
+        };
+        sighash_all.message().as_bytes()
+    };
+
+    let mut skeleton_hash = [0u8; 32];
+    {
+        let mut hasher = new_blake2b();
+        hasher.update(tx.hash().as_slice());
+
+        for i in tx.inputs().len()..tx.witnesses().len() {
+            let w = tx.witnesses().get(i).unwrap();
+            let w = w.as_slice()[4..].to_vec();
+
+            hasher.update(&w.len().to_le_bytes());
+            hasher.update(&w);
+        }
+
+        hasher.finalize(&mut skeleton_hash);
+    }
+
+    let mut message_digest = [0u8; 32];
+    {
+        let mut hasher = new_blake2b();
+        hasher.update(&skeleton_hash[..]);
+        hasher.update(&(message.len() as u64).to_le_bytes());
+        hasher.update(&message[..]);
+        hasher.finalize(&mut message_digest);
+    }
+
+    message_digest
 }

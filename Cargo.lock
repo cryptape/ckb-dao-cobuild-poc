@@ -9,6 +9,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4c7f02d4ea65f2c1853089ffd8d2787bdbc63de2f0d29dedbcf8ccdfa0ccd4cf"
 
 [[package]]
+name = "base64ct"
+version = "1.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
+
+[[package]]
 name = "blake2b-ref"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -45,6 +51,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "ckb-hash"
+version = "0.112.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "25af660fc8746f7c756444e6aa47ede9a874206563b6a1ce1b230a5b86519392"
+dependencies = [
+ "blake2b-ref",
+]
+
+[[package]]
 name = "ckb-standalone-types"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -64,6 +79,16 @@ dependencies = [
  "buddy-alloc",
  "cc",
  "ckb-standalone-types",
+]
+
+[[package]]
+name = "ckb-transaction-cobuild"
+version = "0.1.0"
+source = "git+https://github.com/cryptape/ckb-transaction-cobuild-poc.git#f8bb30677e2a50f6952dc27aa5ebe7de608c00b7"
+dependencies = [
+ "blake2b-ref",
+ "ckb-std",
+ "molecule",
 ]
 
 [[package]]
@@ -201,8 +226,13 @@ dependencies = [
 name = "joyid-cobuild-poc"
 version = "0.1.0"
 dependencies = [
+ "base16ct",
+ "base64ct",
+ "ckb-hash",
  "ckb-std",
+ "ckb-transaction-cobuild",
  "p256",
+ "sha2",
 ]
 
 [[package]]
