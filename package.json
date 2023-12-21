@@ -9,6 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ckb-lumos/base": "^0.21.1",
+    "@ckb-lumos/config-manager": "^0.21.1",
+    "@ckb-lumos/helpers": "^0.21.1",
     "@joyid/ckb": "^0.0.2",
     "flowbite": "^2.2.0",
     "flowbite-react": "^0.7.2",

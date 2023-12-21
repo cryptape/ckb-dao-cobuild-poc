@@ -4,8 +4,15 @@ import * as React from "react";
 import { Button } from "flowbite-react";
 import JoyID from "@/lib/wallet/joyid";
 
+// Set the environment variable to use a predefined connection. This is helpful in development environment to avoid connecting after reload.
+function predefinedConnection() {
+  return process.env.NEXT_PUBLIC_JOYID_PUBKEY
+    ? { pubkey: process.env.NEXT_PUBLIC_JOYID_PUBKEY }
+    : null;
+}
+
 export default function Home() {
-  const [connection, setConnection] = React.useState(null);
+  const [connection, setConnection] = React.useState(predefinedConnection());
   const wallet = new JoyID();
   wallet.restore(connection);
 
@@ -19,15 +26,16 @@ export default function Home() {
     }
   };
 
-  const onSign = async () => {
-    const res = await wallet.sign("hello");
-    console.log(res);
-  };
-
   return (
     <main>
       {wallet.connected() ? (
-        <Button onClick={onSign}>Sign</Button>
+        <>
+          <p>{wallet.address()}</p>
+          <p>
+            Claim testnet wallet from the{" "}
+            <a href="https://faucet.nervos.org/">faucet</a>
+          </p>
+        </>
       ) : (
         <Button onClick={onConnect}>Connect</Button>
       )}

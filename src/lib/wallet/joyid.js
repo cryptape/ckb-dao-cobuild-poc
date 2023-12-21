@@ -1,8 +1,24 @@
+import { injectConfig } from "../runtime-config";
 import * as joyid from "@joyid/ckb";
+import { utils as lumosBaseUtils } from "@ckb-lumos/base";
+import * as lumosHelpers from "@ckb-lumos/helpers";
+
+const ckbHash = lumosBaseUtils.ckbHash;
+
+function buildScript(pubkey, scriptInfo) {
+  const args = ckbHash(pubkey);
+  return {
+    codeHash: scriptInfo.CODE_HASH,
+    hashType: scriptInfo.HASH_TYPE,
+    args,
+  };
+}
 
 export default class Joyid {
   // Inits the wallet with options.
-  constructor() {
+  constructor(config = injectConfig()) {
+    this.ckbChainConfig = config.ckbChainConfig;
+    this.scriptInfo = config.ckbChainConfig.SCRIPTS.JOYID_COBUILD_POC;
     this.connection = null;
   }
 
@@ -24,19 +40,21 @@ export default class Joyid {
     return this.connection !== null && this.connection !== undefined;
   }
 
-  // Gets the username.
-  //
-  // Calls this function only when wallet is connected.
-  username() {
-    return this.connection.address;
-  }
-
   // Gets the CKB address.
   //
   // Calls this function only when wallet is connected.
   address() {
-    // TODO: use joyid-cobuild-poc lock address
-    return this.connected() ? this.connection.address : null;
+    if (this.connected()) {
+      const script = buildScript(
+        `0x${this.connection.pubkey}`,
+        this.scriptInfo,
+      );
+      return lumosHelpers.encodeToAddress(script, {
+        config: this.ckbChainConfig,
+      });
+    }
+
+    return null;
   }
 
   // Calls this function only when wallet is connected.
