@@ -1,0 +1,13 @@
+{
+  "cell_recipes": [
+    {
+      "name": "joyid-cobuild-poc",
+      "tx_hash": "0x53ba0900742334d2283f321ae17324efb3846fa38ba4bd47542f6d508db13b0b",
+      "index": 0,
+      "occupied_capacity": 10059000000000,
+      "data_hash": "0x1d1dfd01af30e184b4b770efaa6662cf07f65fb36b931c9cc75fbba11d939169",
+      "type_id": "0x04dd652246af5f32ae10c04821ae32bff3dce37da52b6c60354c8ba867959e1e"
+    }
+  ],
+  "dep_group_recipes": []
+}
