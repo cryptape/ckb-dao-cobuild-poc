@@ -21,3 +21,20 @@ jobs:
 
       - run: capsule build
       - run: capsule test
+
+  build_release:
+    name: Capsule Build for Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: rustup update stable && rustup default stable
+      - name: install cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
+      - name: install capsule
+        run: cargo install ckb-capsule
+
+      - run: capsule build --release
+      - uses: actions/upload-artifact@v4
+        with:
+          path: |
+            build/release/joyid-cobuild-poc
