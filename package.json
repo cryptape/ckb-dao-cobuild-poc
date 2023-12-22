@@ -1,15 +1,19 @@
 {
   "name": "ckb-dao-cobuild-poc",
+  "type": "module",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "NODE_OPTIONS=--experimental-vm-modules NODE_NO_WARNINGS=1 jest",
+    "watch:test": "NODE_OPTIONS=--experimental-vm-modules NODE_NO_WARNINGS=1 jest --watch"
   },
   "dependencies": {
     "@ckb-lumos/base": "^0.21.1",
+    "@ckb-lumos/codec": "^v0.22.0-next.0",
     "@ckb-lumos/config-manager": "^0.21.1",
     "@ckb-lumos/helpers": "^0.21.1",
     "@joyid/ckb": "^0.0.2",
@@ -22,6 +26,8 @@
   },
   "devDependencies": {
     "autoprefixer": "^10.0.1",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
     "postcss": "^8",
     "tailwindcss": "^3.3.0"
   }
