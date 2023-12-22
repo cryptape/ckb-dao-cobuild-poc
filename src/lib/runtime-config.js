@@ -3,8 +3,6 @@ import { predefined } from "@ckb-lumos/config-manager";
 export const ENV_CKB_CHAIN = "NEXT_PUBLIC_CKB_CHAIN";
 export const ENV_CKB_RPC_URL = "NEXT_PUBLIC_CKB_RPC_URL";
 
-const ENV_KEYS = [ENV_CKB_CHAIN, ENV_CKB_RPC_URL];
-
 const DEFAULT_ENV = {
   [ENV_CKB_CHAIN]: "AGGRON4",
   [ENV_CKB_RPC_URL]: "https://testnet.ckbapp.dev/",
@@ -28,19 +26,22 @@ const CKB_ENVS = {
   },
 };
 
+function getCkbChainConfig(nameOrConfig) {
+  return typeof nameOrConfig === "string"
+    ? CKB_ENVS[nameOrConfig]
+    : nameOrConfig;
+}
+
 export default class RuntimeConfig {
   constructor(env) {
     this.env = { ...DEFAULT_ENV };
-    for (const key of ENV_KEYS) {
+    for (const key in DEFAULT_ENV) {
       if (env[key] !== undefined && env[key] !== null) {
         this.env[key] = env[key];
       }
     }
 
-    this.ckbChainConfig =
-      typeof this.env[ENV_CKB_CHAIN] === "string"
-        ? CKB_ENVS[this.env[ENV_CKB_CHAIN]]
-        : this.env[ENV_CKB_CHAIN];
+    this.ckbChainConfig = getCkbChainConfig(this.env[ENV_CKB_CHAIN]);
   }
 
   getCkbRpcUrl() {

@@ -1,4 +1,3 @@
-import { injectConfig } from "../runtime-config";
 import * as joyid from "@joyid/ckb";
 import { utils as lumosBaseUtils } from "@ckb-lumos/base";
 import * as lumosHelpers from "@ckb-lumos/helpers";
@@ -14,53 +13,28 @@ function buildScript(pubkey, scriptInfo) {
   };
 }
 
-export default class Joyid {
-  // Inits the wallet with options.
-  constructor(config = injectConfig()) {
-    this.ckbChainConfig = config.ckbChainConfig;
-    this.scriptInfo = config.ckbChainConfig.SCRIPTS.JOYID_COBUILD_POC;
-    this.connection = null;
+// Connects to the wallet.
+export async function connect() {
+  return await joyid.connect();
+}
+
+// Gets the CKB address.
+//
+// Calls this function only when wallet is connected.
+export function address(connection, ckbChainConfig) {
+  if (connection !== null && connection !== undefined) {
+    const scriptInfo = ckbChainConfig.SCRIPTS.JOYID_COBUILD_POC;
+
+    const script = buildScript(`0x${connection.pubkey}`, scriptInfo);
+    return lumosHelpers.encodeToAddress(script, {
+      config: ckbChainConfig,
+    });
   }
 
-  // Connects to the wallet.
-  async connect() {
-    this.connection = await joyid.connect();
-    return this.connection;
-  }
+  return null;
+}
 
-  // Restores the wallet connection.
-  //
-  // - connection: this is the data returned from connect()
-  restore(connection) {
-    this.connection = connection;
-  }
-
-  // Checks whether the wallet is connected.
-  connected() {
-    return this.connection !== null && this.connection !== undefined;
-  }
-
-  // Gets the CKB address.
-  //
-  // Calls this function only when wallet is connected.
-  address() {
-    if (this.connected()) {
-      const script = buildScript(
-        `0x${this.connection.pubkey}`,
-        this.scriptInfo,
-      );
-      return lumosHelpers.encodeToAddress(script, {
-        config: this.ckbChainConfig,
-      });
-    }
-
-    return null;
-  }
-
-  // Calls this function only when wallet is connected.
-  //
-  // TODO: figure out what message to sign
-  async sign(message) {
-    return joyid.signChallenge(message, this.connection.address);
-  }
+// Calls this function only when wallet is connected.
+export async function sign(connection, message) {
+  return await joyid.signChallenge(message, connection.address);
 }
