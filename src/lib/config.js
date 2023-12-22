@@ -45,6 +45,12 @@ export function configFromEnv(env) {
 }
 
 export const DEFAULT_CKB_CHAIN = "AGGRON4";
+
+// () => {
+//   ckbChain,
+//   ckbRpcUrl,
+//   ckbChainConfig
+// }
 export function defaultConfig() {
   return {
     ckbChain: DEFAULT_CKB_CHAIN,
