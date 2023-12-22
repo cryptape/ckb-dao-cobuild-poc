@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Button } from "flowbite-react";
 import * as joyid from "@/lib/wallet/joyid";
-import { injectConfig } from "@/lib/runtime-config";
+import { configFromEnv } from "@/lib/app-config";
 
 function getConfiguredConnection() {
   return process.env.NODE_ENV === "development" &&
@@ -35,7 +35,7 @@ export function ConfiguredHome({ config, configuredConnection }) {
     <main>
       {connection !== null ? (
         <>
-          <p class="break-all">
+          <p className="break-all">
             {joyid.address(connection, config.ckbChainConfig)}
           </p>
           <p>
@@ -52,7 +52,7 @@ export function ConfiguredHome({ config, configuredConnection }) {
 
 export default function Home() {
   return ConfiguredHome({
-    config: injectConfig(),
+    config: configFromEnv(process.env),
     configuredConnection: getConfiguredConnection(),
   });
 }
