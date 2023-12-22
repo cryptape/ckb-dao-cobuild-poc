@@ -30,9 +30,9 @@ export default function Home() {
     <main>
       {wallet.connected() ? (
         <>
-          <p>{wallet.address()}</p>
+          <p class="break-all">{wallet.address()}</p>
           <p>
-            Claim testnet wallet from the{" "}
+            Claim testnet CKB from the{" "}
             <a href="https://faucet.nervos.org/">faucet</a>
           </p>
         </>

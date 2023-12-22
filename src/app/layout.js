@@ -9,7 +9,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <main class="max-w-5xl mx-auto prose dark:prose-invert">
+        <main class="max-w-5xl mx-auto p-3 md:p-6 prose dark:prose-invert">
           {children}
         </main>
       </body>
