@@ -13,6 +13,7 @@
     "@ckb-lumos/config-manager": "^0.21.1",
     "@ckb-lumos/helpers": "^0.21.1",
     "@joyid/ckb": "^0.0.2",
+    "@tailwindcss/typography": "^0.5.10",
     "flowbite": "^2.2.0",
     "flowbite-react": "^0.7.2",
     "next": "14.0.4",
