@@ -40,12 +40,12 @@ export const ScriptInfo = table(
 
 export const ScriptInfoVec = vector(ScriptInfo);
 
-export const ResolvedInputs = table (
+export const ResolvedInputs = table(
   {
     outputs: blockchain.CellOutputVec,
     outputsData: blockchain.BytesVec,
   },
-  ["outputs," "outputsData"]
+  ["outputs", "outputsData"],
 );
 
 export const BuildingPacketV1 = table(
@@ -112,16 +112,31 @@ export const WitnessLayout = union(
   WitnessLayoutFieldTags,
 );
 
+export function parseWitnessType(witness) {
+  const buf = bytes.bytify(witness ?? []);
+  if (buf.length > 4) {
+    const typeIndex = Uint32LE.unpack(buf.slice(0, 4));
+    if (typeIndex >= MinWitnessLayoutFieldTag) {
+      for (const [name, index] of Object.entries(WitnessLayoutFieldTags)) {
+        if (index === typeIndex) {
+          return name;
+        }
+      }
+    } else {
+      return "WitnessArgs";
+    }
+  }
+
+  throw new Error("Unknown witness format");
+}
+
 export function tryParseWitness(witness) {
   const buf = bytes.bytify(witness ?? []);
   if (buf.length > 4) {
     const typeIndex = Uint32LE.unpack(buf.slice(0, 4));
     try {
       if (typeIndex >= MinWitnessLayoutFieldTag) {
-        return {
-          type: "WitnessLayout",
-          value: WitnessLayout.unpack(buf),
-        };
+        return WitnessLayout.unpack(buf);
       } else {
         return {
           type: "WitnessArgs",

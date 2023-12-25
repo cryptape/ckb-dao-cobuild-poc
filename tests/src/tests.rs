@@ -54,6 +54,13 @@ fn build_test_cell(context: &mut Context, lock_args: Bytes) -> packed::CellOutpu
 
 fn base_transaction_builder(context: &mut Context, lock_args: Bytes) -> TransactionBuilder {
     let cell = build_test_cell(context, lock_args);
+    // {
+    //     let json: ckb_testtool::ckb_jsonrpc_types::CellOutput = cell.clone().into();
+    //     println!(
+    //         "{}",
+    //         serde_json::to_string(&json).expect("write tx dump to file")
+    //     );
+    // }
 
     // Determined out point to make the tx hash fixed
     let out_point = packed::OutPoint::new_builder()
@@ -113,6 +120,7 @@ fn test_witness_args_layout() {
         .witness(witness.pack())
         .build();
     let tx = context.complete_tx(tx);
+    // dump_tx(&tx, "../test-vectors/witness_args.tx.json");
 
     let challenge = compute_sighash(&tx, vec![0]);
     println!("challenge: {:?}", challenge);
@@ -168,6 +176,7 @@ fn test_cobuild_layout() {
         .witness(witness_layout.as_bytes().pack())
         .build();
     let tx = context.complete_tx(tx);
+    // dump_tx(&tx, "../test-vectors/cobuild.tx.json");
 
     let challenge = compute_message_digest(&tx, 0);
     println!("challenge: {:?}", challenge);

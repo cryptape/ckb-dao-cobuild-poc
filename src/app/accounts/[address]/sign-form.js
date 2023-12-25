@@ -2,11 +2,19 @@
 
 import { Button } from "flowbite-react";
 
-export default function SignForm({ address, buildingPacket }) {
+import BuildingPacketReview from "@/lib/cobuild/react/building-packet-review";
+import { applyLockActions } from "@/lib/cobuild/lock-actions";
+
+export default function SignForm({ address, buildingPacket, ckbChainConfig }) {
+  const appliedBuildingPacket = applyLockActions(
+    buildingPacket,
+    ckbChainConfig,
+  );
+
   return (
     <>
       <Button>Sign</Button>
-      <pre>{JSON.stringify(buildingPacket, null, 2)}</pre>
+      <BuildingPacketReview buildingPacket={appliedBuildingPacket} />
     </>
   );
 }

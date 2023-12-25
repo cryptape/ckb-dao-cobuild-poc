@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { configFromEnv } from "@/lib/config";
 import Assets from "./assets";
 import Loading from "./loading";
 import AccountHeader from "./account-header";

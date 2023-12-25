@@ -4,10 +4,8 @@ import { Button } from "flowbite-react";
 import { useRouter } from "next/navigation";
 
 import * as joyid from "@/lib/wallet/joyid";
-import { configFromEnv } from "@/lib/config";
 
-export default function RootClientPage() {
-  const config = configFromEnv(process.env);
+export default function RootClientPage({ config }) {
   const router = useRouter();
 
   const connect = async () => {

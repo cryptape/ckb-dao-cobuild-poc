@@ -1486,6 +1486,7 @@ dependencies = [
  "ckb-transaction-cobuild",
  "hex-literal",
  "p256",
+ "serde_json",
 ]
 
 [[package]]

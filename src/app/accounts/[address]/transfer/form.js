@@ -11,7 +11,7 @@ import transfer from "@/actions/transfer";
 import Loading from "../loading";
 import SignForm from "../sign-form";
 
-export function TransferFormStep1({ formAction, formState, address }) {
+export function TransactionForm({ formAction, formState, address }) {
   const [balance, setBalance] = useState();
   useEffect(() => {
     fetchAssets(address).then(({ ckbBalance }) => setBalance(ckbBalance));
@@ -59,13 +59,17 @@ export function TransferFormStep1({ formAction, formState, address }) {
   );
 }
 
-export default function TransferForm({ address }) {
+export default function TransferForm({ address, config }) {
   const [formState, formAction] = useFormState(transfer, {});
 
   return formState.buildingPacket === null ||
     formState.buildingPacket === undefined ? (
-    <TransferFormStep1 {...{ formAction, formState, address }} />
+    <TransactionForm {...{ formAction, formState, address }} />
   ) : (
-    <SignForm address={address} buildingPacket={formState.buildingPacket} />
+    <SignForm
+      address={address}
+      buildingPacket={formState.buildingPacket}
+      ckbChainConfig={config.ckbChainConfig}
+    />
   );
 }

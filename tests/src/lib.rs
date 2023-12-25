@@ -166,7 +166,7 @@ pub fn compute_message_digest(tx: &TransactionView, witness_index: usize) -> [u8
             let w = tx.witnesses().get(i).unwrap();
             let w = w.as_slice()[4..].to_vec();
 
-            hasher.update(&w.len().to_le_bytes());
+            hasher.update(&(w.len() as u64).to_le_bytes());
             hasher.update(&w);
         }
 
@@ -183,4 +183,10 @@ pub fn compute_message_digest(tx: &TransactionView, witness_index: usize) -> [u8
     }
 
     message_digest
+}
+
+pub fn dump_tx(tx: &TransactionView, path: &str) {
+    let json: ckb_testtool::ckb_jsonrpc_types::TransactionView = tx.clone().into();
+    let f = std::fs::File::create(path).expect("open file for tx dump");
+    serde_json::to_writer_pretty(f, &json).expect("write tx dump to file");
 }

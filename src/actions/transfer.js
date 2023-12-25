@@ -4,8 +4,8 @@ import { parseUnit } from "@ckb-lumos/bi";
 import { transferCkb } from "@/lib/cobuild/publishers";
 import { configFromEnv } from "@/lib/config";
 
-export default async function transfer(_prevState, formData) {
-  const config = configFromEnv(process.env);
+export default async function transfer(_prevState, formData, config) {
+  config = config ?? configFromEnv(process.env);
 
   const from = formData.get("from");
   const to = formData.get("to");
