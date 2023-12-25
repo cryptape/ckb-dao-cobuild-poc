@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import * as joyid from "@/lib/wallet/joyid";
 import { configFromEnv } from "@/lib/config";
 
-export default function Connect() {
+export default function RootClientPage() {
   const config = configFromEnv(process.env);
   const router = useRouter();
 

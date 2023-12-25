@@ -17,6 +17,9 @@ dependencies:
   '@ckb-lumos/codec':
     specifier: ^v0.22.0-next.0
     version: 0.22.0-next.0
+  '@ckb-lumos/common-scripts':
+    specifier: ^0.21.1
+    version: 0.21.1
   '@ckb-lumos/config-manager':
     specifier: ^0.21.1
     version: 0.21.1
@@ -444,6 +447,22 @@ packages:
     engines: {node: '>=12.0.0'}
     dependencies:
       '@ckb-lumos/bi': 0.22.0-next.0
+    dev: false
+
+  /@ckb-lumos/common-scripts@0.21.1:
+    resolution: {integrity: sha512-EfZQ9wdxPmEsxVVwtBjhpZVKbYCm1FJkMt59ABsIO1Ub7yi0qap7AQl0MMbuLwWIGKwS2w0U3wx/oJPm7z1RXg==}
+    engines: {node: '>=12.0.0'}
+    dependencies:
+      '@ckb-lumos/base': 0.21.1
+      '@ckb-lumos/bi': 0.21.1
+      '@ckb-lumos/codec': 0.21.1
+      '@ckb-lumos/config-manager': 0.21.1
+      '@ckb-lumos/helpers': 0.21.1
+      '@ckb-lumos/rpc': 0.21.1
+      '@ckb-lumos/toolkit': 0.21.1
+      immutable: 4.3.4
+    transitivePeerDependencies:
+      - encoding
     dev: false
 
   /@ckb-lumos/config-manager@0.21.1:

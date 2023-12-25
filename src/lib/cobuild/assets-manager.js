@@ -7,15 +7,13 @@ export async function fetchAssets(config, address) {
   const indexer = new Indexer(config.ckbRpcUrl);
   const collector = indexer.collector({ lock });
 
-  const acc = {
-    ckbBalance: BI.from(0),
-  };
+  let ckbBalance = BI.from(0);
   for await (const cell of collector.collect()) {
     const typeScript = cell.cellOutput.type;
     if (typeScript === null) {
-      acc.ckbBalance = acc.ckbBalance.add(cell.cellOutput.capacity);
+      ckbBalance = ckbBalance.add(cell.cellOutput.capacity);
     }
   }
 
-  return acc;
+  return { ckbBalance: ckbBalance.toHexString() };
 }

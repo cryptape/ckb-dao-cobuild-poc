@@ -1,0 +1,9 @@
+// A Publisher emits BuildingPacket.
+//
+// (config) => async (params) => BuildingPacket
+
+import createLumosCkbBuilder from "@/lib/lumos-adapter/create-lumos-ckb-builder";
+
+export function transferCkb(config) {
+  return createLumosCkbBuilder(config).transferCkb;
+}

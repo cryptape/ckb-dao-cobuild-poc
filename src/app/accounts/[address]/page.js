@@ -1,14 +1,21 @@
+import { Suspense } from "react";
 import { configFromEnv } from "@/lib/config";
 import Assets from "./assets";
+import Loading from "./loading";
+import AccountHeader from "./account-header";
 
-async function fetchHtml() {
-  const resp = await fetch("http://localhost:3000/");
-  return await resp.text();
-}
-
-export default async function Account({ params: { address } }) {
-  const config = configFromEnv(process.env);
-  const props = { config, address };
-
-  return <Assets {...props} />;
+export default function Account({ params: { address } }) {
+  return (
+    <>
+      <header>
+        <AccountHeader address={address} />
+      </header>
+      <section>
+        <h2>CKB</h2>
+        <Suspense fallback={<Loading />}>
+          <Assets address={address} />
+        </Suspense>
+      </section>
+    </>
+  );
 }

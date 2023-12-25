@@ -1,4 +1,4 @@
-export default function AccountConnect({ params: { address } }) {
+export default function AccountHeader({ address }) {
   return (
     <header>
       <p className="break-all">{address}</p>

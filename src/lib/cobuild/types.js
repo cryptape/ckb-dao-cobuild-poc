@@ -6,6 +6,8 @@ const { Script, WitnessArgs } = blockchain;
 
 export { blockchain };
 
+export const Uint32Opt = option(Uint32);
+
 export const String = blockchain.Bytes;
 
 export const Address = union({ Script }, ["Script"]);
@@ -38,14 +40,31 @@ export const ScriptInfo = table(
 
 export const ScriptInfoVec = vector(ScriptInfo);
 
+export const ResolvedInputs = table (
+  {
+    outputs: blockchain.CellOutputVec,
+    outputsData: blockchain.BytesVec,
+  },
+  ["outputs," "outputsData"]
+);
+
 export const BuildingPacketV1 = table(
   {
     message: Message,
     payload: blockchain.Transaction,
+    resolvedInputs: ResolvedInputs,
+    changeOutput: Uint32Opt,
     scriptInfos: ScriptInfoVec,
     lockActions: ActionVec,
   },
-  ["message", "payload", "scriptInfos", "lockActions"],
+  [
+    "message",
+    "payload",
+    "resolvedInputs",
+    "changeOutput",
+    "scriptInfos",
+    "lockActions",
+  ],
 );
 
 export const BuildingPacket = union({ BuildingPacketV1 }, ["BuildingPacketV1"]);
