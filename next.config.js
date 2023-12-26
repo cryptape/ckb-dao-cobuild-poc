@@ -5,6 +5,9 @@ const nextConfig = {
 
     return config;
   },
+  experimental: {
+    serverMinification: false,
+  },
 };
 
 export default nextConfig;
