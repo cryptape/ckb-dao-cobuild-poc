@@ -1,9 +1,9 @@
-import { utils as ckbBaseUtils } from "@ckb-lumos/base";
+import { utils as lumosBaseUtils } from "@ckb-lumos/base";
 
 import * as generalLockActions from "./general-lock-actions";
 import { parseWitnessType } from "./types";
 
-const { computeScriptHash } = ckbBaseUtils;
+const { computeScriptHash } = lumosBaseUtils;
 
 // Generate lockActions.
 //
@@ -22,48 +22,10 @@ export function prepareLockActions(buildingPacket, ckbChainConfig) {
   );
 }
 
-export function storeWitness(buildingPacket, witnessStore, seal) {
-  const witnesses = buildingPacket.value.payload.witnesses;
-  const inputIndices = witnessStore.value.inputIndices;
-
-  if (witnessStore.type === "CobuildSighashAllStore") {
-    witnesses[inputIndices[0]] = WitnessLayout.pack({
-      type: "SighashAll",
-      value: {
-        message: buildingPacket.message,
-        seal,
-      },
-    });
-  } else if (witnessStore.type === "CobuildSighashAllOnlyStore") {
-    witnesses[inputIndices[0]] = WitnessLayout.pack({
-      type: "SighashAllOnly",
-      value: {
-        seal,
-      },
-    });
-  } else if (witnessStore.type === "WitnessArgsStore") {
-    const firstWitnessHex = witnesses[inputIndices[0]];
-    const firstWitnessArgs =
-      firstWitnessHex !== null &&
-      firstWitnessHex !== undefined &&
-      firstWitnessHex !== "0x"
-        ? WitnessArgs.unpack(firstWitnessHex)
-        : {};
-    firstWitnessArgs.lock = seal;
-    witnesses[inputIndices[0]] = WitnessArgs.pack(firstWitnessArgs);
-    // fill empty witnesses
-    for (const i of inputIndices.slice(1)) {
-      witnesses[i] = witnesses[i] ?? "0x";
-    }
-  }
-
-  return buildingPacket;
-}
-
-export function finalizeWitness(buildingPacket) {
+export function finalizeWitnesses(buildingPacket) {
   // fill holes
-  const witnesses = Array.from(
-    buildingPacket.value.payload.witnesses.values().map((w) => w ?? "0x"),
+  const witnesses = Array.from(buildingPacket.value.payload.witnesses).map(
+    (w) => w ?? "0x",
   );
 
   // If there's no SighashAll before SighashAllOnly, replace the first SighashAllOnly with SighashAll
@@ -73,17 +35,35 @@ export function finalizeWitness(buildingPacket) {
       break;
     } else if (witnessType === "SighashAllOnly") {
       const witness = WitnessLayout.unpack(witnesses[i]);
-      witnesses[i] = WitnessLayout.pack({
-        type: "SighashAll",
-        value: {
-          seal: witness.value.seal,
-          message: buildingPacket.value.message,
-        },
-      });
+      witnesses[i] = bytes.hexify(
+        WitnessLayout.pack({
+          type: "SighashAll",
+          value: {
+            seal: witness.value.seal,
+            message: buildingPacket.value.message,
+          },
+        }),
+      );
     }
   }
 
-  buildingPacket.value.payload.witnesses = witnesses;
+  return {
+    type: buildingPacket.type,
+    value: {
+      ...buildingPacket.value,
+      payload: {
+        ...buildingPacket.value.payload,
+        witnesses,
+      },
+    },
+  };
+}
+
+export function findLockActionByLockScript(buildingPacket, lockScript) {
+  const scriptHash = computeScriptHash(lockScript);
+  return buildingPacket.value.lockActions.find(
+    (action) => action.scriptHash === scriptHash,
+  );
 }
 
 function groupByLock(cellOutputs) {

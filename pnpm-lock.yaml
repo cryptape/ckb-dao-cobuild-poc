@@ -26,12 +26,18 @@ dependencies:
   '@ckb-lumos/helpers':
     specifier: ^0.21.1
     version: 0.21.1
+  '@ckb-lumos/rpc':
+    specifier: ^0.21.1
+    version: 0.21.1
   '@joyid/ckb':
     specifier: ^0.0.2
     version: 0.0.2
   '@tailwindcss/typography':
     specifier: ^0.5.10
     version: 0.5.10(tailwindcss@3.3.0)
+  base64-js:
+    specifier: ^1.5.1
+    version: 1.5.1
   flowbite:
     specifier: ^2.2.0
     version: 2.2.0

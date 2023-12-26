@@ -1,11 +1,11 @@
-import { blockchain, utils as ckbBaseUtils } from "@ckb-lumos/base";
+import { blockchain, utils as lumosBaseUtils } from "@ckb-lumos/base";
 import { bytes, number, molecule } from "@ckb-lumos/codec";
 
-import { ScriptInfo, Message } from "./types";
+import { ScriptInfo, Message, WitnessLayout } from "./types";
 
 const { union, table, vector } = molecule;
 const { Uint32 } = number;
-const { ckbHash, CKBHasher } = ckbBaseUtils;
+const { ckbHash, CKBHasher } = lumosBaseUtils;
 
 export function prepareLockAction(
   buildingPacket,
@@ -22,18 +22,89 @@ export function prepareLockAction(
     createWitnessArgsPlaceholder,
     witnessStore,
   );
-  const data = GeneralLockAction.pack({
-    digest,
-    witnessStore,
-  });
+  const data = bytes.hexify(
+    GeneralLockAction.pack({
+      digest,
+      witnessStore,
+    }),
+  );
   const action = {
     scriptInfoHash,
     scriptHash,
     data,
   };
 
-  buildingPacket.value.lockActions.push(action);
-  return buildingPacket;
+  const lockActions = buildingPacket.value.lockActions.filter(
+    (a) => a.scriptHash !== action,
+  );
+  lockActions.push(action);
+
+  return {
+    type: buildingPacket.type,
+    value: {
+      ...buildingPacket.value,
+      lockActions,
+    },
+  };
+}
+
+export function applyLockAction(buildingPacket, lockAction, seal) {
+  const witnesses = [...buildingPacket.value.payload.witnesses];
+  const { witnessStore } = GeneralLockAction.unpack(lockAction.data);
+  const inputIndices = witnessStore.value.inputIndices;
+
+  if (witnessStore.type === "CobuildSighashAllStore") {
+    witnesses[inputIndices[0]] = bytes.hexify(
+      WitnessLayout.pack({
+        type: "SighashAll",
+        value: {
+          message: buildingPacket.value.message,
+          seal,
+        },
+      }),
+    );
+  } else if (witnessStore.type === "CobuildSighashAllOnlyStore") {
+    witnesses[inputIndices[0]] = bytes.hexify(
+      WitnessLayout.pack({
+        type: "SighashAllOnly",
+        value: {
+          seal,
+        },
+      }),
+    );
+  } else if (witnessStore.type === "WitnessArgsStore") {
+    const firstWitnessHex = witnesses[inputIndices[0]];
+    const firstWitnessArgs =
+      firstWitnessHex !== null &&
+      firstWitnessHex !== undefined &&
+      firstWitnessHex !== "0x"
+        ? blockchain.WitnessArgs.unpack(firstWitnessHex)
+        : {};
+    firstWitnessArgs.lock = seal;
+    witnesses[inputIndices[0]] = bytes.hexify(
+      blockchain.WitnessArgs.pack(firstWitnessArgs),
+    );
+    // fill empty witnesses
+    for (const i of inputIndices.slice(1)) {
+      witnesses[i] = witnesses[i] ?? "0x";
+    }
+  }
+
+  const lockActions = buildingPacket.value.lockActions.filter(
+    (action) => action.scriptHash !== lockAction.scriptHash,
+  );
+
+  return {
+    type: buildingPacket.type,
+    value: {
+      ...buildingPacket.value,
+      payload: {
+        ...buildingPacket.value.payload,
+        witnesses,
+      },
+      lockActions,
+    },
+  };
 }
 
 export function chooseWitnessStore(buildingPacket, inputIndices) {

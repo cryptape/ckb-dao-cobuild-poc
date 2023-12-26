@@ -1,4 +1,10 @@
-// TODO: present the buildingPacket
-export default function BuildingPacketReview({ buildingPacket }) {
-  return <pre>{JSON.stringify(buildingPacket, null, 2)}</pre>;
+export default function BuildingPacketReview({
+  buildingPacket,
+  lockActionData,
+}) {
+  const { message, payload } = buildingPacket.value;
+
+  return (
+    <pre>{JSON.stringify({ message, payload, lockActionData }, null, 2)}</pre>
+  );
 }

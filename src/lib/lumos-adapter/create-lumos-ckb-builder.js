@@ -10,7 +10,7 @@ export default function createLumosCkbBuilder({ ckbRpcUrl, ckbChainConfig }) {
   const indexer = new Indexer(ckbRpcUrl);
 
   return {
-    transferCkb: async function ({ from, to, amount, feeRate = 1000 }) {
+    transferCkb: async function ({ from, to, amount }) {
       let txSkeleton = TransactionSkeleton({
         cellProvider: indexer,
       });
@@ -27,10 +27,11 @@ export default function createLumosCkbBuilder({ ckbRpcUrl, ckbChainConfig }) {
         },
       );
 
+      // **Attention:** There's no witnesses set yet, so I set fee rate to 3000 to hope that the final tx fee rate will be larger than 1000.
       txSkeleton = await commonScripts.payFeeByFeeRate(
         txSkeleton,
         [from],
-        feeRate,
+        3000,
         undefined,
         {
           config: ckbChainConfig,

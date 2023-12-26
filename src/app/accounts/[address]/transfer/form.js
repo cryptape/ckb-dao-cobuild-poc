@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useFormState } from "react-dom";
+import { useRouter } from "next/navigation";
 import { Label, TextInput, Alert } from "flowbite-react";
 
 import Capacity from "@/components/capacity";
@@ -10,12 +11,13 @@ import fetchAssets from "@/actions/fetch-assets";
 import transfer from "@/actions/transfer";
 import Loading from "../loading";
 import SignForm from "../sign-form";
+import SubmitBuildingPacket from "../submit-building-packet";
 
 export function TransactionForm({ formAction, formState, address }) {
   const [balance, setBalance] = useState();
   useEffect(() => {
     fetchAssets(address).then(({ ckbBalance }) => setBalance(ckbBalance));
-  }, [address]);
+  }, [address, setBalance]);
 
   return (
     <form className="flex flex-col gap-4" action={formAction}>
@@ -60,16 +62,36 @@ export function TransactionForm({ formAction, formState, address }) {
 }
 
 export default function TransferForm({ address, config }) {
+  const router = useRouter();
   const [formState, formAction] = useFormState(transfer, {});
+  const [signedBuildingPacket, setSignedBuildingPacket] = useState(null);
+  const back = () => router.back();
 
-  return formState.buildingPacket === null ||
-    formState.buildingPacket === undefined ? (
-    <TransactionForm {...{ formAction, formState, address }} />
-  ) : (
-    <SignForm
-      address={address}
-      buildingPacket={formState.buildingPacket}
-      ckbChainConfig={config.ckbChainConfig}
-    />
-  );
+  if (
+    formState.buildingPacket === null ||
+    formState.buildingPacket === undefined
+  ) {
+    return <TransactionForm {...{ formAction, formState, address }} />;
+  } else if (
+    signedBuildingPacket === null ||
+    signedBuildingPacket === undefined
+  ) {
+    return (
+      <SignForm
+        address={address}
+        buildingPacket={formState.buildingPacket}
+        ckbChainConfig={config.ckbChainConfig}
+        onSubmit={setSignedBuildingPacket}
+        onCancel={back}
+      />
+    );
+  } else {
+    return (
+      <SubmitBuildingPacket
+        buildingPacket={signedBuildingPacket}
+        ckbChainConfig={config.ckbChainConfig}
+        onClose={back}
+      />
+    );
+  }
 }

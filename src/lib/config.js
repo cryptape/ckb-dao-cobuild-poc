@@ -3,6 +3,7 @@ import { predefined } from "@ckb-lumos/config-manager";
 const CKB_CHAINS_CONFIGS = {
   AGGRON4: {
     ...predefined.AGGRON4,
+    EXPLORER_URL: "https://pudge.explorer.nervos.org",
     SCRIPTS: {
       ...predefined.AGGRON4.SCRIPTS,
       JOYID_COBUILD_POC: {
@@ -13,6 +14,11 @@ const CKB_CHAINS_CONFIGS = {
           "0x53ba0900742334d2283f321ae17324efb3846fa38ba4bd47542f6d508db13b0b",
         INDEX: "0x0",
         DEP_TYPE: "code",
+      },
+      JOYID: {
+        CODE_HASH:
+          "0xd23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac",
+        HASH_TYPE: "type",
       },
     },
   },
