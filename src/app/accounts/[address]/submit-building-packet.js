@@ -101,11 +101,11 @@ export default function SubmitBuildingPacket({
 
   return (
     <>
-      <div className="mb-5">
+      <aside className="mb-5">
         <Button color={color} onClick={onClose}>
           Close
         </Button>
-      </div>
+      </aside>
 
       <TxStatus ckbChainConfig={ckbChainConfig} {...txState} />
     </>

@@ -1,6 +1,5 @@
 import { Suspense } from "react";
-import Assets from "./assets";
-import Loading from "./loading";
+import Assets, { AssetsFallback } from "./assets";
 import AccountHeader from "./account-header";
 
 export default function Account({ params: { address } }) {
@@ -9,12 +8,11 @@ export default function Account({ params: { address } }) {
       <header>
         <AccountHeader address={address} />
       </header>
-      <section>
-        <h2>CKB</h2>
-        <Suspense fallback={<Loading />}>
+      <main>
+        <Suspense fallback={<AssetsFallback />}>
           <Assets address={address} />
         </Suspense>
-      </section>
+      </main>
     </>
   );
 }

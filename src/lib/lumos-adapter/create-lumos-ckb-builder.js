@@ -1,9 +1,22 @@
 import { Indexer } from "@ckb-lumos/ckb-indexer";
 import { TransactionSkeleton } from "@ckb-lumos/helpers";
-import { common as commonScripts } from "@ckb-lumos/common-scripts";
+import { common as commonScripts, dao } from "@ckb-lumos/common-scripts";
 
 import initLumosCommonScripts from "./init-lumos-common-scripts";
 import createBuildingPacketFromSkeleton from "./create-building-packet-from-skeleton";
+
+// **Attention:** There's no witnesses set yet, so I set fee rate to 3000 to hope that the final tx fee rate will be larger than 1000.
+async function payFee(txSkeleton, from, ckbChainConfig) {
+  return await commonScripts.payFeeByFeeRate(
+    txSkeleton,
+    [from],
+    3000,
+    undefined,
+    {
+      config: ckbChainConfig,
+    },
+  );
+}
 
 export default function createLumosCkbBuilder({ ckbRpcUrl, ckbChainConfig }) {
   initLumosCommonScripts(ckbChainConfig);
@@ -27,17 +40,29 @@ export default function createLumosCkbBuilder({ ckbRpcUrl, ckbChainConfig }) {
         },
       );
 
-      // **Attention:** There's no witnesses set yet, so I set fee rate to 3000 to hope that the final tx fee rate will be larger than 1000.
-      txSkeleton = await commonScripts.payFeeByFeeRate(
+      txSkeleton = await payFee(txSkeleton, from, ckbChainConfig);
+      return createBuildingPacketFromSkeleton(txSkeleton);
+    },
+
+    depositDao: async function ({ from, amount }) {
+      let txSkeleton = TransactionSkeleton({
+        cellProvider: indexer,
+      });
+
+      txSkeleton = await dao.deposit(txSkeleton, from, from, amount, {
+        config: ckbChainConfig,
+      });
+      // dao in @ckb-lumos/common-scripts only inject capacity for the secp256k1 lock, so do it manually.
+      txSkeleton = await commonScripts.injectCapacity(
         txSkeleton,
         [from],
-        3000,
+        amount,
+        from,
         undefined,
-        {
-          config: ckbChainConfig,
-        },
+        { config: ckbChainConfig },
       );
 
+      txSkeleton = await payFee(txSkeleton, from, ckbChainConfig);
       return createBuildingPacketFromSkeleton(txSkeleton);
     },
   };
