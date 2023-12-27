@@ -80,14 +80,14 @@ export function WithdrawRow({ address, cell, tipHeader }) {
   const depositBlockNumber = dao.getDepositBlockNumberFromWithdrawCell(cell);
   const depositHeader = useHeaderByNumber(depositBlockNumber);
   const withdrawHeader = useHeaderByNumber(cell.blockNumber);
-  const waitingDuration =
-    tipHeader && depositHeader && withdrawHeader
-      ? dao.estimateWithdrawWaitingDurationUntil(
-          tipHeader,
-          depositHeader,
-          withdrawHeader,
-        )
-      : null;
+  const loaded = tipHeader && depositHeader && withdrawHeader;
+  const waitingDuration = loaded
+    ? dao.estimateWithdrawWaitingDurationUntil(
+        tipHeader,
+        depositHeader,
+        withdrawHeader,
+      )
+    : null;
   const key = cellKey(cell);
 
   return (
@@ -95,29 +95,33 @@ export function WithdrawRow({ address, cell, tipHeader }) {
       <td>
         <Capacity value={cell.cellOutput.capacity} />
       </td>
-      <td>
-        {tipHeader && depositHeader ? (
-          <>
-            +<Capacity value={dao.reward(cell, depositHeader, tipHeader)} />
-          </>
-        ) : (
+      {loaded ? (
+        <>
+          <td>
+            <>
+              +<Capacity value={dao.reward(cell, depositHeader, tipHeader)} />
+            </>
+          </td>
+          <td>
+            {waitingDuration ? (
+              <p>Waiting for {waitingDuration.humanize()}</p>
+            ) : (
+              <Button
+                as={Link}
+                color="green"
+                href={`/accounts/${address}/claim/${key}`}
+                className="not-prose inline-block"
+              >
+                Claim
+              </Button>
+            )}
+          </td>
+        </>
+      ) : (
+        <td colSpan="2" className="text-center">
           <Loading />
-        )}
-      </td>
-      <td>
-        {waitingDuration ? (
-          <p>Waiting for {waitingDuration.humanize()}</p>
-        ) : (
-          <Button
-            as={Link}
-            color="green"
-            href={`/accounts/${address}/claim/${key}`}
-            className="not-prose inline-block"
-          >
-            Claim
-          </Button>
-        )}
-      </td>
+        </td>
+      )}
     </tr>
   );
 }
