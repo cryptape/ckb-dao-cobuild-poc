@@ -1,5 +1,6 @@
 import moment from "moment";
 import { BI } from "@ckb-lumos/bi";
+import { number } from "@ckb-lumos/codec";
 import { dao } from "@ckb-lumos/common-scripts";
 
 const DAO_CYCLE_EPOCHS = BI.from(180);
@@ -30,9 +31,13 @@ export function duration(depositHeader, withdrawHeader) {
   return moment.duration(endTime.diff(startTime));
 }
 
-export function currentCycleProgress(depositHeader, withdrawHeader) {
+export function getDepositBlockNumberFromWithdrawCell(cell) {
+  return BI.from(number.Uint64.unpack(cell.data)).toHexString();
+}
+
+export function currentCycleProgress(tipHeader, depositHeader) {
   const start = decomposeEpoch(depositHeader.epoch);
-  const end = decomposeEpoch(withdrawHeader.epoch);
+  const end = decomposeEpoch(tipHeader.epoch);
 
   const epochDiff = end.number.sub(start.number).mod(DAO_CYCLE_EPOCHS);
   const commonDenominator = end.length.mul(start.length);
@@ -51,8 +56,45 @@ export function currentCycleProgress(depositHeader, withdrawHeader) {
   return modProgress.toNumber();
 }
 
+function _toJson(epoch) {
+  return {
+    length: epoch.length.toNumber(),
+    index: epoch.index.toNumber(),
+    number: epoch.number.toNumber(),
+  };
+}
+
+export function estimateWithdrawWaitingDurationUntil(
+  tipHeader,
+  depositHeader,
+  withdrawHeader,
+) {
+  const earliestClaimEpoch = BI.from(
+    dao.calculateDaoEarliestSince(depositHeader.epoch, withdrawHeader.epoch),
+  );
+  const start = decomposeEpoch(tipHeader.epoch);
+  const end = decomposeEpoch(earliestClaimEpoch);
+
+  const epochDiff = end.number.sub(start.number);
+  if (epochDiff.isNegative()) {
+    return null;
+  }
+
+  const commonDenominator = end.length.mul(start.length);
+  const fractionDiff = end.index
+    .mul(start.length)
+    .sub(start.index.mul(end.length));
+  const remainingHours = epochDiff
+    .mul(commonDenominator)
+    .add(fractionDiff)
+    .mul(HOURS_PER_EPOCH)
+    .div(commonDenominator);
+
+  return moment.duration(remainingHours, "h");
+}
+
 export function estimateWithdrawWaitingDuration(progress) {
-  const remaningHours =
+  const remainingHours =
     (DAO_CYCLE_EPOCHS.toNumber() * HOURS_PER_EPOCH * (100 - progress)) / 100;
-  return moment.duration(remaningHours, "h");
+  return moment.duration(remainingHours, "h");
 }

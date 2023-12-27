@@ -65,5 +65,23 @@ export default function createLumosCkbBuilder({ ckbRpcUrl, ckbChainConfig }) {
       txSkeleton = await payFee(txSkeleton, from, ckbChainConfig);
       return createBuildingPacketFromSkeleton(txSkeleton);
     },
+
+    withdrawDao: async function ({ from, cell }) {
+      let txSkeleton = TransactionSkeleton({
+        cellProvider: indexer,
+      });
+
+      // dao.withdraw only adds input from secp256k1, so add input manually
+      txSkeleton = await commonScripts.setupInputCell(txSkeleton, cell, from, {
+        config: ckbChainConfig,
+      });
+      // let dao.withdraw helps to add cellDeps
+      txSkeleton = await dao.withdraw(txSkeleton, cell, from, {
+        config: ckbChainConfig,
+      });
+
+      txSkeleton = await payFee(txSkeleton, from, ckbChainConfig);
+      return createBuildingPacketFromSkeleton(txSkeleton);
+    },
   };
 }
