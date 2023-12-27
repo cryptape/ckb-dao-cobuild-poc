@@ -44,6 +44,9 @@ dependencies:
   flowbite-react:
     specifier: ^0.7.2
     version: 0.7.2(@types/react@18.2.45)(esbuild@0.19.9)(next@14.0.4)(react-dom@18.0.0)(react@18.0.0)(tailwindcss@3.3.0)
+  moment:
+    specifier: ^2.30.0
+    version: 2.30.0
   next:
     specifier: 14.0.4
     version: 14.0.4(@babel/core@7.23.6)(@opentelemetry/api@1.7.0)(react-dom@18.0.0)(react@18.0.0)
@@ -4976,6 +4979,10 @@ packages:
 
   /mkdirp-classic@0.5.3:
     resolution: {integrity: sha512-gKLcREMhtuZRwRAfqP3RFW+TK4JqApVBtOIftVgjuABpAtpxhPGaDcfvbhNvD0B8iD1oUr/txX35NjcaY6Ns/A==}
+    dev: false
+
+  /moment@2.30.0:
+    resolution: {integrity: sha512-8XSlYFhOSJvnEJOas6RpDCNU2PYeVC+oE33d3Z9tIsXpD8LIgBeqrHPjP8es4b3fcJpf07D1PJWGDUfdbqDLnQ==}
     dev: false
 
   /mri@1.2.0:

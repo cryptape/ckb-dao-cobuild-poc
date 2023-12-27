@@ -37,7 +37,9 @@ export function buildLockInfo(ckbChainConfig, scriptInfo) {
           queryOptions = {
             ...queryOptions,
             lock: script,
+            argsLen: (script.args.length - 2) / 2,
             type: queryOptions.type ?? "empty",
+            data: queryOptions.data ?? "0x",
           };
 
           this.cellCollector = cellProvider.collector(queryOptions);

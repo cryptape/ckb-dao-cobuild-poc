@@ -6,9 +6,9 @@ export default function Transfer({ params: { address }, config }) {
   config = config ?? configFromEnv(process.env);
 
   return (
-    <section>
+    <main>
       <h2>Transfer</h2>
       <TransferForm address={address} config={config} />
-    </section>
+    </main>
   );
 }

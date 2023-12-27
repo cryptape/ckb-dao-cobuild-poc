@@ -5,13 +5,11 @@ export const metadata = {
   description: "An Papp to manage CKB DAO assets",
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children, modal }) {
   return (
     <html lang="en">
-      <body>
-        <main className="max-w-5xl mx-auto p-3 md:p-6 prose dark:prose-invert">
-          {children}
-        </main>
+      <body className="max-w-5xl mx-auto p-3 md:p-6 prose dark:prose-invert">
+        {children}
       </body>
     </html>
   );

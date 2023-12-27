@@ -2,9 +2,15 @@ export default function BuildingPacketReview({
   buildingPacket,
   lockActionData,
 }) {
-  const { message, payload } = buildingPacket.value;
+  const { message, payload, resolvedInputs } = buildingPacket.value;
 
   return (
-    <pre>{JSON.stringify({ message, payload, lockActionData }, null, 2)}</pre>
+    <pre>
+      {JSON.stringify(
+        { message, payload, resolvedInputs, lockActionData },
+        null,
+        2,
+      )}
+    </pre>
   );
 }
