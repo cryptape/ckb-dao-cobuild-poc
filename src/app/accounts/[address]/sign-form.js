@@ -1,9 +1,11 @@
 "use client";
 
-import { Button } from "flowbite-react";
+import { useState } from "react";
+import { Button, Alert } from "flowbite-react";
 import { addressToScript } from "@ckb-lumos/helpers";
 
 import * as joyid from "@/lib/wallet/joyid";
+import SubmitButton from "@/components/submit-button";
 import BuildingPacketReview from "@/lib/cobuild/react/building-packet-review";
 import {
   prepareLockActions,
@@ -22,6 +24,7 @@ export default function SignForm({
   onSubmit,
   onCancel,
 }) {
+  const [error, setError] = useState();
   const preparedBuildingPacket = prepareLockActions(
     buildingPacket,
     ckbChainConfig,
@@ -33,24 +36,33 @@ export default function SignForm({
   );
   const lockActionData = GeneralLockAction.unpack(lockAction.data);
   const sign = async () => {
-    const seal = await joyid.sign(
-      address,
-      lockActionData.digest.substring(2),
-      ckbChainConfig,
-    );
-    onSubmit(
-      finalizeWitnesses(applyLockAction(buildingPacket, lockAction, seal)),
-    );
+    try {
+      const seal = await joyid.sign(
+        address,
+        lockActionData.digest.substring(2),
+        ckbChainConfig,
+      );
+      onSubmit(
+        finalizeWitnesses(applyLockAction(buildingPacket, lockAction, seal)),
+      );
+    } catch (err) {
+      setError(err.toString());
+    }
   };
 
   return (
     <>
-      <div className="flex flex-wrap gap-2">
-        <Button onClick={sign}>Sign</Button>
+      {error ? (
+        <Alert className="mb-5" color="failure">
+          {error}
+        </Alert>
+      ) : null}
+      <form action={sign} className="flex flex-wrap gap-2">
+        <SubmitButton>Sign</SubmitButton>
         <Button color="light" onClick={onCancel}>
           Cancel
         </Button>
-      </div>
+      </form>
       <BuildingPacketReview
         buildingPacket={preparedBuildingPacket}
         lockActionData={lockActionData}

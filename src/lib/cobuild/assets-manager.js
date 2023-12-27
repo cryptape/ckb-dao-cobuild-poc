@@ -13,7 +13,7 @@ export async function fetchAssets(address, { ckbRpcUrl, ckbChainConfig }) {
   let ckbBalance = BI.from(0);
   for await (const cell of collector.collect()) {
     const typeScript = cell.cellOutput.type;
-    if (typeScript === null) {
+    if (typeScript === null && cell.data === "0x") {
       ckbBalance = ckbBalance.add(cell.cellOutput.capacity);
     }
   }

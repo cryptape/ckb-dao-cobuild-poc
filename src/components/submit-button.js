@@ -7,7 +7,7 @@ export default function SubmitButton({ children }) {
   const { pending } = useFormStatus();
 
   return (
-    <Button type="submit" aria-disabled={pending}>
+    <Button type="submit" isProcessing={pending}>
       {children}
     </Button>
   );
