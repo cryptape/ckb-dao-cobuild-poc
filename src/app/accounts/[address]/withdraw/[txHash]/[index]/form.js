@@ -52,7 +52,7 @@ function CellDetails({ cell, pending, onConfirm }) {
     return <Loading />;
   }
 
-  const progress = dao.currentCycleProgress(depositHeader, tipHeader);
+  const progress = dao.currentCycleProgress(tipHeader, depositHeader);
   const color = daoCycleProgressColor(progress);
 
   return (
