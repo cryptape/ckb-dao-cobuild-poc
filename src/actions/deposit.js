@@ -4,7 +4,7 @@ import { parseUnit } from "@ckb-lumos/bi";
 import { depositDao } from "@/lib/cobuild/publishers";
 import { configFromEnv } from "@/lib/config";
 
-export default async function transfer(_prevState, formData, config) {
+export default async function deposit(_prevState, formData, config) {
   config = config ?? configFromEnv(process.env);
 
   const from = formData.get("from");

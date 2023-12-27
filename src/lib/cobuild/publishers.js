@@ -11,3 +11,7 @@ export function transferCkb(config) {
 export function depositDao(config) {
   return createLumosCkbBuilder(config).depositDao;
 }
+
+export function withdrawDao(config) {
+  return createLumosCkbBuilder(config).withdrawDao;
+}

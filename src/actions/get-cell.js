@@ -19,12 +19,15 @@ export async function getCellWithoutCache(outPoint, config) {
   }
 
   const txResp = await rpc.getTransaction(outPoint.txHash, "0x1", true);
+  const blockHash = txResp.txStatus.blockHash;
+  const headerResp = await rpc.getHeader(blockHash);
 
   return {
     outPoint,
+    blockHash,
+    blockNumber: headerResp.number,
     cellOutput: liveCellResp.cell.output,
     data: liveCellResp.cell.data.content,
-    blockHash: txResp.txStatus.blockHash,
   };
 }
 
