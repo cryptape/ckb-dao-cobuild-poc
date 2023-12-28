@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { RPC } from "@ckb-lumos/rpc";
 import { blockchain, utils as lumosBaseUtils } from "@ckb-lumos/base";
 
-import { configFromEnv } from "@/lib/config";
+import { useConfig } from "@/lib/config";
 
 const { ckbHash } = lumosBaseUtils;
 
@@ -37,7 +37,7 @@ async function sendTxInner(tx, txHash, { ckbRpcUrl }) {
 }
 
 export default async function sendTx(tx, config) {
-  config = config ?? configFromEnv(process.env);
+  config = config ?? useConfig();
   const txHash = ckbHash(blockchain.RawTransaction.pack(tx));
 
   try {

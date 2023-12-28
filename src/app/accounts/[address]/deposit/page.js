@@ -1,9 +1,9 @@
-import { configFromEnv } from "@/lib/config";
+import { useConfig } from "@/lib/config";
 
 import DepositForm from "./form";
 
 export default function Deposit({ params: { address }, config }) {
-  config = config ?? configFromEnv(process.env);
+  config = config ?? useConfig();
 
   return (
     <main>

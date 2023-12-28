@@ -1,8 +1,8 @@
-import { configFromEnv } from "@/lib/config";
+import { useConfig } from "@/lib/config";
 import RootHeader from "./header";
 
 export default function RootPage({ config }) {
-  config = config ?? configFromEnv(process.env);
+  config = config ?? useConfig();
   return (
     <main>
       <RootHeader config={config} />

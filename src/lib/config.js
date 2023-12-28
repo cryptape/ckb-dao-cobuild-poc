@@ -24,43 +24,64 @@ const CKB_CHAINS_CONFIGS = {
   },
 };
 
-const NEXT_PUBLIC_PREFIX = "NEXT_PUBLIC_";
-const ENV_VARIABLE_NAMES = {
-  ckbChain: "CKB_CHAIN",
-  ckbRpcUrl: "CKB_RPC_URL",
-  ckbChainConfig: "CKB_CHAIN_CONFIG",
-};
+// consider empty string as null
+function presence(val) {
+  return val !== "" ? val : null;
+}
 
-export function configFromEnv(env) {
-  const config = defaultConfig();
+// assign source to dest, if source[key] is null or undefined, use dest[key]
+function assign(dest, source) {
+  for (const key in source) {
+    dest[key] = source[key] ?? dest[key];
+  }
+  return dest;
+}
 
-  for (const key in config) {
-    const envName = ENV_VARIABLE_NAMES[key];
-    if (envName !== undefined) {
-      config[key] =
-        env[envName] ?? env[NEXT_PUBLIC_PREFIX + envName] ?? config[key];
-    }
+function buildCkbChainConfig(ckbChain) {
+  if (ckbChain in CKB_CHAINS_CONFIGS) {
+    return CKB_CHAINS_CONFIGS[ckbChain];
   }
 
-  config.ckbChainConfig ??= CKB_CHAINS_CONFIGS[config.ckbChain];
-  if (typeof config.ckbChainConfig === "string") {
-    config.ckbChainConfig = JSON.load(config.ckbChainConfig);
-  }
+  // for custom env, duplicate from AGGRON4
+  const template = CKB_CHAINS_CONFIGS.AGGRON4;
+  const JOYID_COBUILD_POC = assign(
+    { ...template.SCRIPTS.JOYID_COBUILD_POC },
+    {
+      CODE_HASH: presence(process.env.NEXT_PUBLIC_JOYID_COBUILD_POC_CODE_HASH),
+      TX_HASH: presence(process.env.NEXT_PUBLIC_JOYID_COBUILD_POC_TX_HASH),
+      INDEX: presence(process.env.NEXT_PUBLIC_JOYID_COBUILD_POC_INDEX) ?? "0x0",
+    },
+  );
 
-  return config;
+  return {
+    ...template,
+    EXPLORER_URL: null,
+    SCRIPTS: {
+      ...template.SCRIPTS,
+      JOYID_COBUILD_POC,
+    },
+  };
 }
 
 export const DEFAULT_CKB_CHAIN = "AGGRON4";
+export const DEFAULT_CKB_RPC_URL = "https://testnet.ckbapp.dev/";
 
 // () => {
 //   ckbChain,
 //   ckbRpcUrl,
 //   ckbChainConfig
 // }
-export function defaultConfig() {
-  return {
-    ckbChain: DEFAULT_CKB_CHAIN,
-    ckbRpcUrl: "https://testnet.ckbapp.dev/",
-    ckbChainConfig: CKB_CHAINS_CONFIGS[DEFAULT_CKB_CHAIN],
+export const useConfig = (() => {
+  const ckbChain =
+    presence(process.env.NEXT_PUBLIC_CKB_CHAIN) ?? DEFAULT_CKB_CHAIN;
+  const config = {
+    ckbChain,
+    ckbRpcUrl:
+      presence(process.env.NEXT_PUBLIC_CKB_RPC_URL) ?? DEFAULT_CKB_RPC_URL,
+    ckbChainConfig: buildCkbChainConfig(ckbChain),
   };
-}
+  console.log(JSON.stringify(config, null, 2));
+  return () => {
+    return config;
+  };
+})();

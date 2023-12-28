@@ -2,10 +2,10 @@
 
 import { parseUnit } from "@ckb-lumos/bi";
 import { depositDao } from "@/lib/cobuild/publishers";
-import { configFromEnv } from "@/lib/config";
+import { useConfig } from "@/lib/config";
 
 export default async function deposit(_prevState, formData, config) {
-  config = config ?? configFromEnv(process.env);
+  config = config ?? useConfig();
 
   const from = formData.get("from");
   const amount = parseUnit(formData.get("amount"), "ckb");

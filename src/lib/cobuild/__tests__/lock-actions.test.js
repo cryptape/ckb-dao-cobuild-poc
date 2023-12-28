@@ -1,10 +1,10 @@
 import { number } from "@ckb-lumos/codec";
 
-import { defaultConfig } from "../../config";
+import { useConfig } from "../../config";
 import { prepareLockActions } from "../lock-actions";
 import { GeneralLockAction, chooseWitnessStore } from "../general-lock-actions";
 
-const { ckbChainConfig } = defaultConfig();
+const { ckbChainConfig } = useConfig();
 
 test("cobuild layout", () => {
   const tx = {

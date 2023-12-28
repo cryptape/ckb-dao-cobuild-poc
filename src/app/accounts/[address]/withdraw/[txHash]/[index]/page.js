@@ -1,4 +1,4 @@
-import { configFromEnv } from "@/lib/config";
+import { useConfig } from "@/lib/config";
 
 import WithdrawForm from "./form";
 
@@ -6,7 +6,7 @@ export default function Withdraw({
   params: { address, txHash, index },
   config,
 }) {
-  config = config ?? configFromEnv(process.env);
+  config = config ?? useConfig();
 
   const outPoint = {
     txHash: `0x${txHash}`,
