@@ -23,8 +23,9 @@ export function DaoCycleProgressHint({ progress }) {
     </p>
   ) : (
     <p>
-      You have to wait for {waitingDuration.humanize()} before claiming the
-      withdraw. You won't get reward during this waiting period.
+      If you withdraw now, you have to wait for {waitingDuration.humanize()}{" "}
+      before claiming the withdraw. You won't get reward during this waiting
+      period.
     </p>
   );
 }
