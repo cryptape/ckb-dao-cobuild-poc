@@ -101,8 +101,6 @@ export const useConfig = (() => {
     ckbChainConfig: buildCkbChainConfig(ckbChain),
   };
 
-  console.log(JSON.stringify(config, null, 2));
-
   return () => {
     return config;
   };

@@ -3,6 +3,7 @@
 # CKB
 /ckb-miner.toml
 /ckb.toml
+/ckb.toml.bak
 /data
 /default.db-options
 /specs

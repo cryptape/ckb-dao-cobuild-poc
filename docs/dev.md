@@ -5,13 +5,7 @@
 Init a dev chain using the test account that has 20 billions of CKB tokens in the genesis block.
 
 ```bash
-ckb init -c dev --ba-arg 0xc8328aabcd9b9e8e64fbc566c4385c3bdeb219d7
-```
-
-Edit `specs/dev.toml` to append `Indexer` and `IntegrationTest` to the `modules` option under the `[rpc]` section.
-
-```toml
-modules = ["Net", "Pool", "Miner", "Chain", "Stats", "Subscription", "Experiment", "Debug", "Indexer", "IntegrationTest"]
+bin/init-dev-chain.sh
 ```
 
 Import the test account into `ckb-cli` with empty password
@@ -27,12 +21,6 @@ Start the chain.
 ckb run
 ```
 
-Mine some blocks to make CKB tokens available to deploy contracts
-
-```bash
-bin/generate-blocks.sh 20
-```
-
 ## Deploy Contracts to the Local Dev Chain
 
 Build contracts
@@ -43,45 +31,10 @@ capsule build --release
 
 Or download files from [releases](https://github.com/doitian/ckb-dao-cobuild-poc/releases) and save them into the `build/release/` folder.
 
-Deploy using ckb-cli
+Deploy using ckb-cli by running the following script
 
-Step 1: Call `gen-txs`. Notice the from-address is the test miner account.
-
-```bash
-rm -rf migrations/dev && mkdir -p migrations/dev
-ckb-cli deploy gen-txs --from-address ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqwgx292hnvmn68xf779vmzrshpmm6epn4c0cgwga \
-  --fee-rate 1000 --deployment-config deployment.toml --info-file migrations/dev/deployment.json --migration-dir migrations/dev
 ```
-
-Step 2: Sign txs
-
-```bash
-ckb-cli deploy sign-txs --info-file migrations/dev/deployment.json --privkey-path specs/miner.key --output-format json
-# => {
-# =>   "cell_tx_signatures": {
-# =>     "0xc8328...": "0x92d7..."
-# =>   }
-# => }
-```
-
-Add the signatures to the info file `migrations/dev/deployment.json` manually. Attention that wrap the value in an array.
-
-```json
-  "cell_tx_signatures": {
-    "0xc8328...": ["0x92d7..."]
-  },
-```
-
-Step 3: Send txs
-
-```bash
-ckb-cli deploy apply-txs --info-file migrations/dev/deployment.json --migration-dir migrations/dev
-```
-
-Step 4: Mine 3 blocks to commit txs
-
-```bash
-bin/generate-blocks.sh 3
+bin/deploy-to-dev-chain.sh
 ```
 
 ## Configure The Web App
