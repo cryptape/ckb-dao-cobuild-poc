@@ -1,6 +1,7 @@
 import moment from "moment";
 import { BI } from "@ckb-lumos/bi";
-import { number } from "@ckb-lumos/codec";
+import { number, bytes } from "@ckb-lumos/codec";
+import { blockchain } from "@ckb-lumos/base";
 import { dao } from "@ckb-lumos/common-scripts";
 
 const DAO_CYCLE_EPOCHS = BI.from(180);
@@ -33,6 +34,15 @@ export function duration(depositHeader, withdrawHeader) {
 
 export function getDepositBlockNumberFromWithdrawCell(cell) {
   return BI.from(number.Uint64.unpack(cell.data)).toHexString();
+}
+
+// Pack witness for withdraw phase 2 tx.
+// depositHeaderIndex - cellDeps index of the block hash in which the deposit tx is committed.
+export function packDaoWitnessArgs(depositHeaderIndex) {
+  const witnessArgs = {
+    inputType: bytes.hexify(number.Uint64LE.pack(depositHeaderIndex)),
+  };
+  return bytes.hexify(blockchain.WitnessArgs.pack(witnessArgs));
 }
 
 export function currentCycleProgress(tipHeader, depositHeader) {

@@ -99,7 +99,10 @@ export function WithdrawRow({ address, cell, tipHeader }) {
         <>
           <td>
             <>
-              +<Capacity value={dao.reward(cell, depositHeader, tipHeader)} />
+              +
+              <Capacity
+                value={dao.reward(cell, depositHeader, withdrawHeader)}
+              />
             </>
           </td>
           <td>
