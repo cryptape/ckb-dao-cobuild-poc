@@ -43,6 +43,8 @@ Deploy using ckb-cli by running the following script
 bin/deploy-to-dev-chain.sh
 ```
 
+This will create the `.env` file which contains the configurations for the dev chain. To switch back to the testnet, just rename the `.env` file or delete it.
+
 ## Configure The Web App
 
 Start the local development server.
