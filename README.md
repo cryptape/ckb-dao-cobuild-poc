@@ -2,9 +2,12 @@
 
 ## Disclaimer
 
-- This is a PoC demo to show how to use JoyID and the new witness layout and transaction building process named Cobuild.
-- The demo uses a custom lock which has a different CKB address from the JoyID CKB address.
-- The [contract](contracts/joyid-cobuild-poc/README.md) has not been audited, USE AT YOUR OWN RISK!
+- This is a PoC demo showcasing the management of DAO deposits through the use of a new witness layout and transaction building protocol named **Cobuild**.
+- In this demo, JoyID is used to sign transactions. Please note that the CKB address used in this demo is different from the official JoyID CKB address, as a [custom lock][custom-lock] is employed to support the Cobuild witness layout.
+- The [custom lock][custom-lock] utilized in this demo has never been audited, USE AT YOUR OWN RISK!
+- There's a [preview](https://ckb-dao-cobuild-poc.vercel.app/) deployed to the testnet, have fun.
+
+[custom-lock]: contracts/joyid-cobuild-poc/README.md
 
 ## Getting Started
 

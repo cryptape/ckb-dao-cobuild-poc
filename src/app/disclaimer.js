@@ -1,24 +1,24 @@
-"use client";
-
-import { useState } from "react";
 import { Alert } from "flowbite-react";
 
-export default function Disclaimer() {
-  const [dismissed, setDismissed] = useState(false);
-
-  return dismissed ? null : (
+export default function Disclaimer({ config: { ckbChain } }) {
+  return (
     <Alert className="mb-5" color="warning">
       <h3 className="not-prose font-medium">Disclamer!</h3>
-      <p>
-        This is a PoC demo to show how to use JoyID and the new witness layout
-        and transaction building process named Cobuild.
-      </p>
-      <p>
-        The demo uses a custom lock which has a different CKB address from the
-        JoyID CKB address.
-      </p>
-      <p>The contract used by this demo has not been audited.</p>
-      <p>This demo runs in CKB testnet.</p>
+      <ul>
+        <li>
+          This is a PoC demo showcasing the management of DAO deposits through
+          the use of a new witness layout and transaction building protocol
+          named <strong>Cobuild</strong>.
+        </li>
+        <li>
+          In this demo, JoyID is used to sign transactions. Please note that the
+          CKB address used in this demo is different from the official JoyID CKB
+          address, as a custom lock is employed to support the Cobuild witness
+          layout.
+        </li>
+        <li>The custom lock utilized in this demo has never been audited!</li>
+        <li>This demo runs in the CKB chain {ckbChain}.</li>
+      </ul>
     </Alert>
   );
 }

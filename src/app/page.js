@@ -6,7 +6,7 @@ export default function RootPage({ config }) {
   config = config ?? useConfig();
   return (
     <main>
-      <Disclaimer />
+      <Disclaimer config={config} />
       <RootHeader config={config} />
     </main>
   );
