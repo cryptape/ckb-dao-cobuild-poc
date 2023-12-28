@@ -35,5 +35,18 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: build-release
-          path: |
-            build/release
+          path: build/release
+
+  release:
+    name: Release Contract
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build_release
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-release
+      - uses: softprops/action-gh-release@v1
+        with:
+          files: joyid-cobuild-poc

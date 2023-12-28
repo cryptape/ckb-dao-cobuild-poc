@@ -41,6 +41,8 @@ Build contracts
 capsule build --release
 ```
 
+Or download files from [releases](https://github.com/doitian/ckb-dao-cobuild-poc/releases) and save them into the `build/release/` folder.
+
 Deploy using ckb-cli
 
 Step 1: Call `gen-txs`. Notice the from-address is the test miner account.
