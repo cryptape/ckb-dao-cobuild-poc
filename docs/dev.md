@@ -21,6 +21,12 @@ Start the chain.
 ckb run
 ```
 
+Generate some blocks to make the CKB tokens in the genesis block available.
+
+```
+bin/generate-blocks.sh 20
+```
+
 ## Deploy Contracts to the Local Dev Chain
 
 Build contracts
@@ -38,12 +44,6 @@ bin/deploy-to-dev-chain.sh
 ```
 
 ## Configure The Web App
-
-Ensure the local CKB node is running and generate the .env file from the deployment result file.
-
-```bash
-bin/use-env.sh migrations/dev/20*.json > .env
-```
 
 Start the local development server.
 
@@ -65,7 +65,11 @@ Mine some blocks to commit the transfer transaction.
 bin/generate-blocks.sh 3
 ```
 
-Now it's OK to run the web app with the local dev chain. You can run a miner process to generate blocks automatically in another terminal, or just run `bin/generate-blocks.sh 3` to manually commit transactions in the memory pool.
+Now it's OK to run the web app with the local dev chain. Start a CKB miner process in another terminal window to commit transactions automatically, or run `bin/generate-blocks.sh 3` to commit transactions manually.
+
+```bash
+ckb miner
+```
 
 To test the phase 2 withdraw, use the command `bin/generate-epochs.sh 180` to generate 180 epochs, which is a full DAO cycle.
 

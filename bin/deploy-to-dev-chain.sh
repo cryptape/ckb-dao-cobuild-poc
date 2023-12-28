@@ -4,8 +4,6 @@ set -e
 set -u
 [ -n "${DEBUG:-}" ] && set -x || true
 
-bin/generate-blocks.sh 20
-
 if ! [ -f build/release/joyid-cobuild-poc ]; then
   echo "Expect the contract file build/release/joyid-cobuild-poc" >&2
   echo "Run $(capsule build --release) or download from the project GitHub Releases" >&2
