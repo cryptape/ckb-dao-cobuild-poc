@@ -86,7 +86,7 @@ bin/generate-blocks.sh 3
 
 ## Configure The Web App
 
-Generate .env file form the deployment.
+Ensure the local CKB node is running and generate the .env file from the deployment result file.
 
 ```bash
 bin/use-env.sh migrations/dev/20*.json > .env

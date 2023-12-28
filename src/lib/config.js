@@ -44,6 +44,7 @@ function buildCkbChainConfig(ckbChain) {
 
   // for custom env, duplicate from AGGRON4
   const template = CKB_CHAINS_CONFIGS.AGGRON4;
+
   const JOYID_COBUILD_POC = assign(
     { ...template.SCRIPTS.JOYID_COBUILD_POC },
     {
@@ -53,12 +54,31 @@ function buildCkbChainConfig(ckbChain) {
     },
   );
 
+  const tx0 =
+    presence(process.env.NEXT_PUBLIC_CKB_GENESIS_TX_0) ??
+    template.SCRIPTS.DAO.TX_HASH;
+  const tx1 =
+    presence(process.env.NEXT_PUBLIC_CKB_GENESIS_TX_1) ??
+    template.SCRIPTS.SECP256K1_BLAKE160.TX_HASH;
+
   return {
     ...template,
     EXPLORER_URL: null,
     SCRIPTS: {
-      ...template.SCRIPTS,
       JOYID_COBUILD_POC,
+      JOYID: template.SCRIPTS.JOYID,
+      DAO: {
+        ...template.SCRIPTS.DAO,
+        TX_HASH: tx0,
+      },
+      SECP256K1_BLAKE160: {
+        ...template.SCRIPTS.SECP256K1_BLAKE160,
+        TX_HASH: tx1,
+      },
+      SECP256K1_BLAKE160_MULTISIG: {
+        ...template.SCRIPTS.SECP256K1_BLAKE160_MULTISIG,
+        TX_HASH: tx1,
+      },
     },
   };
 }
@@ -80,7 +100,9 @@ export const useConfig = (() => {
       presence(process.env.NEXT_PUBLIC_CKB_RPC_URL) ?? DEFAULT_CKB_RPC_URL,
     ckbChainConfig: buildCkbChainConfig(ckbChain),
   };
+
   console.log(JSON.stringify(config, null, 2));
+
   return () => {
     return config;
   };

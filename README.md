@@ -1,5 +1,11 @@
 # CKB DAO Cobuild POC
 
+## Disclaimer
+
+- This is a PoC demo to show how to use JoyID and the new witness layout and transaction building process named Cobuild.
+- The demo uses a custom lock which has a different CKB address from the JoyID CKB address.
+- The [contract](contracts/joyid-cobuild-poc/README.md) has not been audited, USE AT YOUR OWN RISK!
+
 ## Getting Started
 
 First, run the development server:
