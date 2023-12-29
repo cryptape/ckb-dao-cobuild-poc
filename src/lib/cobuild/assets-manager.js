@@ -2,7 +2,7 @@ import { Indexer } from "@ckb-lumos/ckb-indexer";
 import { addressToScript } from "@ckb-lumos/helpers";
 import { BI } from "@ckb-lumos/bi";
 
-const DEPOSIT_DAO_DATA = "0x0000000000000000";
+export const DEPOSIT_DAO_DATA = "0x0000000000000000";
 
 async function reduceCkb(collector) {
   let balance = BI.from(0);
@@ -59,4 +59,23 @@ export async function fetchAssets(address, { ckbRpcUrl, ckbChainConfig }) {
   const daoCells = await reduceDao(daoCollector);
 
   return { ckbBalance, daoCells };
+}
+
+export function isDaoWithdrawCell(cellOutput, cellData, ckbChainConfig) {
+  const dao = ckbChainConfig.SCRIPTS.DAO;
+  return (
+    cellOutput.type?.codeHash === dao.CODE_HASH && cellData !== DEPOSIT_DAO_DATA
+  );
+}
+
+export function isDaoDepositCell(cellOutput, cellData, ckbChainConfig) {
+  const dao = ckbChainConfig.SCRIPTS.DAO;
+  return (
+    cellOutput.type?.codeHash === dao.CODE_HASH && cellData === DEPOSIT_DAO_DATA
+  );
+}
+
+export function isNoneDaoTypedCell(cellOutput, cellData, ckbChainConfig) {
+  const dao = ckbChainConfig.SCRIPTS.DAO;
+  return cellOutput.type && cellOutput.type.codeHash !== dao.CODE_HASH;
 }

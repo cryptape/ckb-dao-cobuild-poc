@@ -49,7 +49,7 @@ export default function SignForm({
           {error}
         </Alert>
       ) : null}
-      <form action={sign} className="flex flex-wrap gap-2">
+      <form action={sign} className="flex flex-wrap gap-2 mb-5">
         <SubmitButton>Sign</SubmitButton>
         <Button color="light" onClick={onCancel}>
           Cancel
@@ -58,6 +58,9 @@ export default function SignForm({
       <BuildingPacketReview
         buildingPacket={buildingPacket}
         lockActionData={lockActionData}
+        address={address}
+        ckbChainConfig={ckbChainConfig}
+        withdrawCellRewards={{}}
       />
     </>
   );
