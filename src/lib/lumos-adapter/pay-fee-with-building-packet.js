@@ -64,6 +64,7 @@ export default async function payFeeWithBuildingPacket(
     type: buildingPacket.type,
     value: {
       ...buildingPacket.value,
+      changeOutput,
       payload: newBuildingPacket.value.payload,
       resolvedInputs: newBuildingPacket.value.resolvedInputs,
     },
