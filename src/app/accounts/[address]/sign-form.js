@@ -8,7 +8,6 @@ import * as joyid from "@/lib/wallet/joyid";
 import SubmitButton from "@/components/submit-button";
 import BuildingPacketReview from "@/lib/cobuild/react/building-packet-review";
 import {
-  prepareLockActions,
   findLockActionByLockScript,
   finalizeWitnesses,
 } from "@/lib/cobuild/lock-actions";
@@ -25,15 +24,8 @@ export default function SignForm({
   onCancel,
 }) {
   const [error, setError] = useState();
-  const preparedBuildingPacket = prepareLockActions(
-    buildingPacket,
-    ckbChainConfig,
-  );
   const lockScript = addressToScript(address, { config: ckbChainConfig });
-  const lockAction = findLockActionByLockScript(
-    preparedBuildingPacket,
-    lockScript,
-  );
+  const lockAction = findLockActionByLockScript(buildingPacket, lockScript);
   const lockActionData = GeneralLockAction.unpack(lockAction.data);
   const sign = async () => {
     try {
@@ -64,7 +56,7 @@ export default function SignForm({
         </Button>
       </form>
       <BuildingPacketReview
-        buildingPacket={preparedBuildingPacket}
+        buildingPacket={buildingPacket}
         lockActionData={lockActionData}
       />
     </>

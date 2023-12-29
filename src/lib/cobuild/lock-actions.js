@@ -2,6 +2,7 @@ import { utils as lumosBaseUtils } from "@ckb-lumos/base";
 
 import * as generalLockActions from "./general-lock-actions";
 import { parseWitnessType } from "./types";
+import { groupByLock } from "./script-group";
 
 const { computeScriptHash } = lumosBaseUtils;
 
@@ -63,12 +64,6 @@ export function findLockActionByLockScript(buildingPacket, lockScript) {
   const scriptHash = computeScriptHash(lockScript);
   return buildingPacket.value.lockActions.find(
     (action) => action.scriptHash === scriptHash,
-  );
-}
-
-function groupByLock(cellOutputs) {
-  return Object.groupBy(cellOutputs.entries(), ([_i, v]) =>
-    computeScriptHash(v.lock),
   );
 }
 

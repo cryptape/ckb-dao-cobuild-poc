@@ -10,19 +10,6 @@ import {
   packDaoWitnessArgs,
 } from "../dao";
 
-// **Attention:** There's no witnesses set yet, so I set fee rate to 3000 to hope that the final tx fee rate will be larger than 1000.
-async function payFee(txSkeleton, from, ckbChainConfig) {
-  return await commonScripts.payFeeByFeeRate(
-    txSkeleton,
-    [from],
-    3000,
-    undefined,
-    {
-      config: ckbChainConfig,
-    },
-  );
-}
-
 function buildCellDep(scriptInfo) {
   return {
     outPoint: {
@@ -31,6 +18,11 @@ function buildCellDep(scriptInfo) {
     },
     depType: scriptInfo.DEP_TYPE,
   };
+}
+
+function useLastOutputAsChangeOutput(txSkeleton) {
+  const size = txSkeleton.get("outputs").size;
+  return size > 1 ? size - 1 : null;
 }
 
 export default function createLumosCkbBuilder({ ckbRpcUrl, ckbChainConfig }) {
@@ -56,8 +48,11 @@ export default function createLumosCkbBuilder({ ckbRpcUrl, ckbChainConfig }) {
         },
       );
 
-      txSkeleton = await payFee(txSkeleton, from, ckbChainConfig);
-      return createBuildingPacketFromSkeleton(txSkeleton);
+      // lumos always add the target output first
+      return createBuildingPacketFromSkeleton(
+        txSkeleton,
+        useLastOutputAsChangeOutput(txSkeleton),
+      );
     },
 
     depositDao: async function ({ from, amount }) {
@@ -78,8 +73,10 @@ export default function createLumosCkbBuilder({ ckbRpcUrl, ckbChainConfig }) {
         { config: ckbChainConfig },
       );
 
-      txSkeleton = await payFee(txSkeleton, from, ckbChainConfig);
-      return createBuildingPacketFromSkeleton(txSkeleton);
+      return createBuildingPacketFromSkeleton(
+        txSkeleton,
+        useLastOutputAsChangeOutput(txSkeleton),
+      );
     },
 
     withdrawDao: async function ({ from, cell }) {
@@ -96,8 +93,10 @@ export default function createLumosCkbBuilder({ ckbRpcUrl, ckbChainConfig }) {
         config: ckbChainConfig,
       });
 
-      txSkeleton = await payFee(txSkeleton, from, ckbChainConfig);
-      return createBuildingPacketFromSkeleton(txSkeleton);
+      return createBuildingPacketFromSkeleton(
+        txSkeleton,
+        useLastOutputAsChangeOutput(txSkeleton),
+      );
     },
 
     claimDao: async function ({ from, cell }) {
@@ -157,8 +156,8 @@ export default function createLumosCkbBuilder({ ckbRpcUrl, ckbChainConfig }) {
 
       let txSkeleton = txSkeletonMutable.asImmutable();
 
-      txSkeleton = await payFee(txSkeleton, from, ckbChainConfig);
-      return createBuildingPacketFromSkeleton(txSkeleton);
+      // Allow pay fee from the unlocked cell directly.
+      return createBuildingPacketFromSkeleton(txSkeleton, 0);
     },
   };
 }

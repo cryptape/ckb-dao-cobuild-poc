@@ -2,6 +2,8 @@
 
 import { parseUnit } from "@ckb-lumos/bi";
 import { transferCkb } from "@/lib/cobuild/publishers";
+import { prepareLockActions } from "@/lib/cobuild/lock-actions";
+import { payFee } from "@/lib/cobuild/fee-manager";
 import { useConfig } from "@/lib/config";
 
 export default async function transfer(_prevState, formData, config) {
@@ -12,11 +14,23 @@ export default async function transfer(_prevState, formData, config) {
   const amount = parseUnit(formData.get("amount"), "ckb");
 
   try {
-    const buildingPacket = await transferCkb(config)({ from, to, amount });
+    let buildingPacket = await transferCkb(config)({
+      from,
+      to,
+      amount,
+    });
+    buildingPacket = await payFee(
+      buildingPacket,
+      [{ address: from, feeRate: 1200 }],
+      config,
+    );
+    buildingPacket = prepareLockActions(buildingPacket, config.ckbChainConfig);
+
     return {
       buildingPacket,
     };
   } catch (err) {
+    console.error(err.stack);
     return {
       error: err.toString(),
     };

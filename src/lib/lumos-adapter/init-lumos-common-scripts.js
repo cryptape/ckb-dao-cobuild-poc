@@ -77,6 +77,7 @@ export function buildLockInfo(ckbChainConfig, scriptInfo) {
         //===========================
         // 1.Add inputCell to txSkeleton
         txMutable.update("inputs", (inputs) => inputs.push(inputCell));
+        txMutable.update("witnesses", (witnesses) => witnesses.push("0x"));
 
         // 2. Add output. The function `lumos.commons.common.transfer` will scan outputs for available balance for each account.
         const outputCell = {

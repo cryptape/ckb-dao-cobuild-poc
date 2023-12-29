@@ -3,6 +3,8 @@
 import { parseUnit } from "@ckb-lumos/bi";
 import { depositDao } from "@/lib/cobuild/publishers";
 import { useConfig } from "@/lib/config";
+import { prepareLockActions } from "@/lib/cobuild/lock-actions";
+import { payFee } from "@/lib/cobuild/fee-manager";
 
 export default async function deposit(_prevState, formData, config) {
   config = config ?? useConfig();
@@ -11,7 +13,14 @@ export default async function deposit(_prevState, formData, config) {
   const amount = parseUnit(formData.get("amount"), "ckb");
 
   try {
-    const buildingPacket = await depositDao(config)({ from, amount });
+    let buildingPacket = await depositDao(config)({ from, amount });
+    buildingPacket = await payFee(
+      buildingPacket,
+      [{ address: from, feeRate: 1200 }],
+      config,
+    );
+    buildingPacket = prepareLockActions(buildingPacket, config.ckbChainConfig);
+
     return {
       buildingPacket,
     };

@@ -48,6 +48,24 @@ export function prepareLockAction(
   };
 }
 
+export function storeWitnessForFeeEstimation(
+  buildingPacket,
+  scriptHash,
+  inputIndices,
+  createSealPlaceHolder,
+) {
+  buildingPacket = prepareLockAction(
+    buildingPacket,
+    scriptHash,
+    inputIndices,
+    createSealPlaceHolder,
+  );
+  const lockAction = buildingPacket.value.lockActions.find(
+    (action) => action.scriptHash === scriptHash,
+  );
+  return applyLockAction(buildingPacket, lockAction, createSealPlaceHolder());
+}
+
 export function applyLockAction(buildingPacket, lockAction, seal) {
   const witnesses = [...buildingPacket.value.payload.witnesses];
   const { witnessStore } = GeneralLockAction.unpack(lockAction.data);
