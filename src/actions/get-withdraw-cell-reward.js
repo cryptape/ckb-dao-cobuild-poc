@@ -4,13 +4,9 @@ import { cache } from "react";
 import { RPC } from "@ckb-lumos/rpc";
 
 import { useConfig } from "@/lib/config";
-import * as dao from "@lib/dao";
+import * as dao from "@/lib/dao";
 
-export async function getWithdrawCellRewardWithoutCache(
-  outPoint,
-  depositBlockHash,
-  config,
-) {
+export async function getWithdrawCellRewardWithoutCache(outPoint, config) {
   const { ckbRpcUrl } = config ?? useConfig();
   const rpc = new RPC(ckbRpcUrl);
 
@@ -23,10 +19,13 @@ export async function getWithdrawCellRewardWithoutCache(
     return null;
   }
 
+  const depositBlockNumber = dao.getDepositBlockNumberFromWithdrawCell({
+    data: liveCellResp.cell.data.content,
+  });
+  const depositHeader = await rpc.getHeaderByNumber(depositBlockNumber);
   const txResp = await rpc.getTransaction(outPoint.txHash, "0x2", true);
   const withdrawBlockHash = txResp.txStatus.blockHash;
   const withdrawHeader = await rpc.getHeader(withdrawBlockHash);
-  const depositHeader = await rpc.getHeader(depositBlockHash);
   const reward = dao.reward(
     {
       cellOutput: liveCellResp.cell.output,

@@ -5,6 +5,7 @@ import { Button, Alert } from "flowbite-react";
 import { addressToScript } from "@ckb-lumos/helpers";
 
 import * as joyid from "@/lib/wallet/joyid";
+import useWithdrawCellRewards from "@/hooks/use-withdraw-cell-rewards";
 import SubmitButton from "@/components/submit-button";
 import BuildingPacketReview from "@/lib/cobuild/react/building-packet-review";
 import {
@@ -24,6 +25,7 @@ export default function SignForm({
   onCancel,
 }) {
   const [error, setError] = useState();
+  const withdrawCellRewards = useWithdrawCellRewards(buildingPacket);
   const lockScript = addressToScript(address, { config: ckbChainConfig });
   const lockAction = findLockActionByLockScript(buildingPacket, lockScript);
   const lockActionData = GeneralLockAction.unpack(lockAction.data);
@@ -60,7 +62,7 @@ export default function SignForm({
         lockActionData={lockActionData}
         address={address}
         ckbChainConfig={ckbChainConfig}
-        withdrawCellRewards={{}}
+        withdrawCellRewards={withdrawCellRewards}
       />
     </>
   );
