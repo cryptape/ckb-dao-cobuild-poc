@@ -39,6 +39,13 @@ function CapacityChange({ value }) {
   );
 }
 
+function witnessLayoutDisplay(witnessStoreType) {
+  return witnessStoreType
+    .replace(/Store$/, "")
+    .replace(/[A-Z]/g, " $&")
+    .trim();
+}
+
 export default function BuildingPacketReview({
   buildingPacket,
   withdrawCellRewards,
@@ -133,9 +140,15 @@ export function TxSection({
         </dd>
       </div>
       <div className="x-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-        <dt className="leading-6 text-gray-900">Challenge</dt>
+        <dt className="leading-6 text-gray-900">Your Challenge</dt>
         <dd className="text-gray-700 sm:col-span-2 sm:mt-0 break-all">
           {lockActionData.digest}
+        </dd>
+      </div>
+      <div className="x-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+        <dt className="leading-6 text-gray-900">Your Witness Layout</dt>
+        <dd className="text-gray-700 sm:col-span-2 sm:mt-0">
+          {witnessLayoutDisplay(lockActionData.witnessStore.type)}
         </dd>
       </div>
       <div className="x-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
