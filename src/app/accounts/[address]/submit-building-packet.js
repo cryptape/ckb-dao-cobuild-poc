@@ -38,7 +38,8 @@ export function TxStatus({ txHash, txStatus, ckbChainConfig }) {
     <>
       {txHash ? (
         <p className="break-all">
-          Tx Hash: <TxHash txHash={txHash} ckbChainConfig={ckbChainConfig} />
+          Transactoin Hash:{" "}
+          <TxHash txHash={txHash} ckbChainConfig={ckbChainConfig} />
         </p>
       ) : null}
       {txStatus.status === "committed"
