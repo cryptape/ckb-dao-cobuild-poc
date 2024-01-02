@@ -41,19 +41,19 @@ export const DepositFrom = table(
   ["lock", "capacity", "from"],
 );
 
-// Create a DAO withdraw cell from the deposit cell referenced by `previous_output`. The withdraw cell has the same lock script as the deposit cell.
+// Create a DAO withdraw cell from the deposit cell referenced by `previousOutput`. The withdraw cell has the same lock script as the deposit cell.
 //
 // This action is a shortcut of `WithdrawTo` which `to` is the lock script of the deposit cell.
 //
 // Because of the rules of the DAO, the deposit cell must be at the same position in the outputs as the corresponding withdraw cell in the inputs.
 export const Withdraw = table(
   {
-    previous_output: OutPoint,
+    previousOutput: OutPoint,
   },
-  ["previous_output"],
+  ["previousOutput"],
 );
 
-// Create a DAO withdraw cell from the deposit cell referenced by `previous_output`. The withdraw cell has the lock script `to`.
+// Create a DAO withdraw cell from the deposit cell referenced by `previousOutput`. The withdraw cell has the lock script `to`.
 //
 // Because of the rules of the DAO, the deposit cell must be at the same position in the outputs as the corresponding withdraw cell in the inputs and the lock script `to` must have the same size as the deposit cell lock script. In other words, their args fields must have the same length.
 //
@@ -72,25 +72,25 @@ export const Withdraw = table(
 // The verifier MUST check the deposit cell exists in the inputs, and the withdraw cell is at the same position in the outputs.
 export const WithdrawTo = table(
   {
-    previous_output: OutPoint,
+    previousOutput: OutPoint,
     to: Script,
   },
-  ["previous_output"],
+  ["previousOutput"],
 );
 
-// Claim locked CKB tokens and the DAO compensation from the DAO withdraw cell referenced by `previous_output`. The recipient lock script is the same as the withdraw cell.
+// Claim locked CKB tokens and the DAO compensation from the DAO withdraw cell referenced by `previousOutput`. The recipient lock script is the same as the withdraw cell.
 //
 // This action is a shortcut of `ClaimTo` which `to` is the lock script of the withdraw cell. See more details in the docs of `ClaimTo`.
 export const Claim = table(
   {
-    previous_output: OutPoint,
+    previousOutput: OutPoint,
     // The sum of the locked CKB tokens and the DAO compensation.
-    total_claimed_capacity: Uint64,
+    totalClaimedCapacity: Uint64,
   },
-  ["previous_output", "total_claimed_capacity"],
+  ["previousOutput", "totalClaimedCapacity"],
 );
 
-// Claim locked CKB tokens and the DAO compensation from the DAO withdraw cell referenced by `previous_output`. The recipient lock script is `to`.
+// Claim locked CKB tokens and the DAO compensation from the DAO withdraw cell referenced by `previousOutput`. The recipient lock script is `to`.
 //
 // ## Builder
 //
@@ -111,12 +111,12 @@ export const Claim = table(
 // The verifier MUST check the withdraw cell exists in the inputs.
 export const ClaimTo = table(
   {
-    previous_output: OutPoint,
+    previousOutput: OutPoint,
     // The sum of the locked CKB tokens and the DAO componsation.
-    total_claimed_capacity: Uint64,
+    totalClaimedCapacity: Uint64,
     to: ScriptOpt,
   },
-  ["previous_output", "total_claimed_capacity", "to"],
+  ["previousOutput", "totalClaimedCapacity", "to"],
 );
 
 // Perform a single DAO operation.
@@ -154,13 +154,13 @@ export const MultipleOperations = vector(SingleOperation);
 // For each lock script found in `Deposit.lock` and `DepositFrom.from` (not `None`), tally the expected fund and the actual fund.
 //
 // - For matched `Deposit.lock` and `DepositFrom.from`, add the `capacity` to the expected fund.
-// - For each input having the lock script, add the `total_claimed_capacity` to the actual fund if it is a DAO withdraw cell, otherwise add the cell `capacity` to the actual fund.
+// - For each input having the lock script, add the `totalClaimedCapacity` to the actual fund if it is a DAO withdraw cell, otherwise add the cell `capacity` to the actual fund.
 //
 // The actual fund MUST be equal to or larger than the expected fund. Use `DepositFrom` and set `from` to None to bypass the verification.
 //
-// For each lock script found in the withdraw cell referenced by `Claim.previous_output` and `Claim.to` (not `None`), tally the expected incoming and the actual incoming.
+// For each lock script found in the withdraw cell referenced by `Claim.previousOutput` and `Claim.to` (not `None`), tally the expected incoming and the actual incoming.
 //
-// - For matched `Claim.previous_output` and `Claim.to`, add the `total_claimed_capacity` to the expected incoming.
+// - For matched `Claim.previousOutput` and `Claim.to`, add the `totalClaimedCapacity` to the expected incoming.
 // - For each output having the lock script, add the cell `capacity` to the actual incoming.
 //
 // The sum of all positive (expected incoming - actual incoming) MUST be equal to or less than the transaction fee. Use `Claim` and set `to` to None to bypass this verification.
