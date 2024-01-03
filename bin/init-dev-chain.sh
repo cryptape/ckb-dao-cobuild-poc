@@ -4,7 +4,7 @@ set -e
 set -u
 [ -n "${DEBUG:-}" ] && set -x || true
 
-ckb reset-data --all --force
+ckb reset-data --all --force || true
 ckb init -c dev --force --ba-arg 0xc8328aabcd9b9e8e64fbc566c4385c3bdeb219d7
 sed -i.bak \
   -e 's/^modules = .*/modules = ["Net", "Pool", "Miner", "Chain", "Stats", "Subscription", "Experiment", "Debug", "Indexer", "IntegrationTest"]/' \
