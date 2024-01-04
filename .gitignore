@@ -1,4 +1,6 @@
 .env
+.env.*
+/migrations
 
 # CKB
 /ckb-miner.toml
@@ -7,7 +9,6 @@
 /data
 /default.db-options
 /specs
-/migrations/dev
 
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
@@ -45,15 +46,3 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# Rust
-target
-.cache/.cargo/*
-
-# C
-contracts/c/build/*
-
-# others
-build/*
-!.gitkeep
-.tmp/

@@ -51,7 +51,7 @@ function storeWitnessForFeeEstimation(
 ) {
   const script =
     buildingPacket.value.resolvedInputs.outputs[inputIndices[0]].lock;
-  if (script.codeHash === ckbChainConfig.SCRIPTS.JOYID_COBUILD_POC.CODE_HASH) {
+  if (script.codeHash === ckbChainConfig.SCRIPTS.JOYID.CODE_HASH) {
     return generalLockActions.storeWitnessForFeeEstimation(
       buildingPacket,
       scriptHash,

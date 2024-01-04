@@ -7,8 +7,9 @@ import base64 from "base64-js";
 const ckbHash = lumosBaseUtils.ckbHash;
 
 function buildScript(pubkey, scriptInfo) {
-  // first 20 bytes
-  const args = ckbHash(pubkey).substring(0, 42);
+  // 0001: webauthn
+  // + first 20 bytes of pubkey hash
+  const args = `0x0001${ckbHash(pubkey).substring(2, 42)}`;
   return {
     codeHash: scriptInfo.CODE_HASH,
     hashType: scriptInfo.HASH_TYPE,
@@ -26,8 +27,12 @@ export async function connect() {
 // Calls this function only when wallet is connected.
 export function address(connection, ckbChainConfig) {
   if (connection !== null && connection !== undefined) {
-    const scriptInfo = ckbChainConfig.SCRIPTS.JOYID_COBUILD_POC;
+    // for non-dev, just return the offical address
+    if (ckbChainConfig.SCRIPTS.JOYID_APP === undefined) {
+      return connection.address;
+    }
 
+    const scriptInfo = ckbChainConfig.SCRIPTS.JOYID;
     const script = buildScript(`0x${connection.pubkey}`, scriptInfo);
     return lumosHelpers.encodeToAddress(script, {
       config: ckbChainConfig,
@@ -44,19 +49,21 @@ export async function sign(address, message, ckbChainConfig) {
     toJoyidAddress(address, ckbChainConfig),
   );
 
-  const seal = ["0x", resp.pubkey];
+  const seal = ["0x01", resp.pubkey];
   seal.push(bytes.hexify(signatureFromDer(resp.signature)).substring(2));
   seal.push(bytes.hexify(urlSafeBase64Decode(resp.message)).substring(2));
   return seal.join("");
 }
 
 function toJoyidAddress(address, ckbChainConfig) {
-  const scriptInfo = ckbChainConfig.SCRIPTS.JOYID;
-  const script = lumosHelpers.addressToScript(address, {
+  if (ckbChainConfig.SCRIPTS.JOYID_APP === undefined) {
+    return address;
+  }
+
+  const scriptInfo = ckbChainConfig.SCRIPTS.JOYID_APP;
+  const { args } = lumosHelpers.addressToScript(address, {
     config: ckbChainConfig,
   });
-  // add prefix
-  const args = "0x0001" + script.args.substring(2);
   const joyidScript = {
     codeHash: scriptInfo.CODE_HASH,
     hashType: scriptInfo.HASH_TYPE,

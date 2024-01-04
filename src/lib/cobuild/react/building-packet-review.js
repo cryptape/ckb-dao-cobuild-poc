@@ -6,6 +6,9 @@ import { blockchain, utils as lumosBaseUtils } from "@ckb-lumos/base";
 import { BI, formatUnit } from "@ckb-lumos/bi";
 import * as lumosHelpers from "@ckb-lumos/helpers";
 
+import { DaoActionData } from "@/lib/papps/dao/schema";
+import { getDaoScriptHash } from "@/lib/papps/dao/script-info";
+
 const { ckbHash } = lumosBaseUtils;
 
 import {
@@ -112,6 +115,75 @@ export default function BuildingPacketReview({
   );
 }
 
+export function DaoOperationReview({ op, ckbChainConfig }) {
+  if (op.type === "Deposit") {
+    return (
+      <li className="break-all">
+        Deposit {formatUnit(op.value.capacity, "ckb")} to{" "}
+        {lumosHelpers.encodeToAddress(op.value.lock, {
+          config: ckbChainConfig,
+        })}
+      </li>
+    );
+  } else if (op.type === "Withdraw") {
+    return (
+      <li className="break-all">
+        Withdraw output {op.value.previousOutput.index} of transaction{" "}
+        {op.value.previousOutput.txHash}.
+      </li>
+    );
+  } else if (op.type === "Claim") {
+    return (
+      <li className="break-all">
+        Claim output {op.value.previousOutput.index} of transaction{" "}
+        {op.value.previousOutput.txHash}, the total claimed amount is{" "}
+        {formatUnit(op.value.totalClaimedCapacity, "ckb")}
+      </li>
+    );
+  } else {
+    return <li>{op.type}</li>;
+  }
+}
+
+export function DaoActionReview({ action, unpackedData, ckbChainConfig }) {
+  const ops =
+    unpackedData.type === "SingleOperation"
+      ? [unpackedData.value]
+      : unpackedData.value;
+
+  return (
+    <div>
+      <div>
+        <strong>DAO</strong>
+        <ol>
+          {ops.map((op, i) => (
+            <DaoOperationReview
+              key={`dao-${action.scriptHash}-${i}`}
+              op={op}
+              ckbChainConfig={ckbChainConfig}
+            />
+          ))}
+        </ol>
+      </div>
+    </div>
+  );
+}
+
+export function ActionReview({ action, ckbChainConfig }) {
+  if (action.scriptHash === getDaoScriptHash()) {
+    return DaoActionReview({
+      action,
+      ckbChainConfig,
+      unpackedData: DaoActionData.unpack(action.data),
+    });
+  }
+  return (
+    <pre className="font-mono p-4 bg-slate-800 text-slate-300 rounded overflow-scroll">
+      {JSON.stringify(action, null, 2)}
+    </pre>
+  );
+}
+
 export function TxSection({
   buildingPacket,
   withdrawCellRewards,
@@ -153,10 +225,14 @@ export function TxSection({
       </div>
       <div className="x-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
         <dt className="leading-6 text-gray-900">Message</dt>
-        <dd className="text-gray-700 sm:col-span-2 sm:mt-0">
-          <pre className="font-mono p-4 bg-slate-800 text-slate-300 rounded">
-            {JSON.stringify(buildingPacket.value.message, null, 2)}
-          </pre>
+        <dd className="text-gray-700 divide-y divide-gray-100 space-y-4 sm:col-span-2 sm:mt-0">
+          {buildingPacket.value.message.actions.map((action) => (
+            <ActionReview
+              key={`action-${action.scriptHash}`}
+              action={action}
+              ckbChainConfig={ckbChainConfig}
+            />
+          ))}
         </dd>
       </div>
     </dl>

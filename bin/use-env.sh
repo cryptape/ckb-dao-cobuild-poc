@@ -25,6 +25,10 @@ esac
 
 sed -n \
   -e 's/,$//' \
-  -e 's/^ *"type_id": /NEXT_PUBLIC_JOYID_COBUILD_POC_CODE_HASH=/p' \
-  -e 's/^ *"tx_hash": /NEXT_PUBLIC_JOYID_COBUILD_POC_TX_HASH=/p' \
-  "$@"
+  -e 's/^ *"type_id": /NEXT_PUBLIC_JOYID_CODE_HASH=/p' \
+  "$@" | head -1
+
+sed -n \
+  -e 's/,$//' \
+  -e 's/^ *"tx_hash": /NEXT_PUBLIC_JOYID_TX_HASH=/p' \
+  "$@" | tail -1

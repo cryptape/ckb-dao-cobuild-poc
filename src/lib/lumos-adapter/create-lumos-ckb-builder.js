@@ -1,34 +1,21 @@
-import { RPC } from "@ckb-lumos/rpc";
 import { Indexer } from "@ckb-lumos/ckb-indexer";
 import { TransactionSkeleton } from "@ckb-lumos/helpers";
-import { common as commonScripts, dao } from "@ckb-lumos/common-scripts";
+import { common as commonScripts } from "@ckb-lumos/common-scripts";
+
+import {
+  createBuildingPacketByFormDataCreator,
+  createBuildingPacketByCreator,
+} from "@/lib/papps/papp";
+import { getDaoPappRegistry } from "@/lib/papps/dao/registry";
 
 import initLumosCommonScripts from "./init-lumos-common-scripts";
 import createBuildingPacketFromSkeleton from "./create-building-packet-from-skeleton";
-import {
-  getDepositBlockNumberFromWithdrawCell,
-  packDaoWitnessArgs,
-} from "../dao";
 
-function buildCellDep(scriptInfo) {
-  return {
-    outPoint: {
-      txHash: scriptInfo.TX_HASH,
-      index: scriptInfo.INDEX,
-    },
-    depType: scriptInfo.DEP_TYPE,
-  };
-}
-
-function useLastOutputAsChangeOutput(txSkeleton) {
-  const size = txSkeleton.get("outputs").size;
-  return size > 1 ? size - 1 : null;
-}
-
-export default function createLumosCkbBuilder({ ckbRpcUrl, ckbChainConfig }) {
+export default function createLumosCkbBuilder(config) {
+  const { ckbRpcUrl, ckbChainConfig } = config;
   initLumosCommonScripts(ckbChainConfig);
-  const rpc = new RPC(ckbRpcUrl);
   const indexer = new Indexer(ckbRpcUrl);
+  const dao = getDaoPappRegistry(config);
 
   return {
     transferCkb: async function ({ from, to, amount }) {
@@ -49,115 +36,27 @@ export default function createLumosCkbBuilder({ ckbRpcUrl, ckbChainConfig }) {
       );
 
       // lumos always add the target output first
-      return createBuildingPacketFromSkeleton(
-        txSkeleton,
-        useLastOutputAsChangeOutput(txSkeleton),
+      return createBuildingPacketFromSkeleton(txSkeleton);
+    },
+
+    depositDao: async function (formData) {
+      return await createBuildingPacketByFormDataCreator(
+        dao,
+        "deposit",
+        formData,
       );
     },
 
-    depositDao: async function ({ from, amount }) {
-      let txSkeleton = TransactionSkeleton({
-        cellProvider: indexer,
+    withdrawDao: async function ({ cell }) {
+      return await createBuildingPacketByCreator(dao, "withdraw", {
+        previousOutput: cell.outPoint,
       });
-
-      txSkeleton = await dao.deposit(txSkeleton, from, from, amount, {
-        config: ckbChainConfig,
-      });
-      // dao in @ckb-lumos/common-scripts only inject capacity for the secp256k1 lock, so do it manually.
-      txSkeleton = await commonScripts.injectCapacity(
-        txSkeleton,
-        [from],
-        amount,
-        from,
-        undefined,
-        { config: ckbChainConfig },
-      );
-
-      return createBuildingPacketFromSkeleton(
-        txSkeleton,
-        useLastOutputAsChangeOutput(txSkeleton),
-      );
     },
 
-    withdrawDao: async function ({ from, cell }) {
-      let txSkeleton = TransactionSkeleton({
-        cellProvider: indexer,
+    claimDao: async function ({ cell }) {
+      return await createBuildingPacketByCreator(dao, "claim", {
+        previousOutput: cell.outPoint,
       });
-
-      // dao.withdraw only adds input from secp256k1, so add input manually
-      txSkeleton = await commonScripts.setupInputCell(txSkeleton, cell, from, {
-        config: ckbChainConfig,
-      });
-      // let dao.withdraw helps to add cellDeps
-      txSkeleton = await dao.withdraw(txSkeleton, cell, from, {
-        config: ckbChainConfig,
-      });
-
-      return createBuildingPacketFromSkeleton(
-        txSkeleton,
-        useLastOutputAsChangeOutput(txSkeleton),
-      );
-    },
-
-    claimDao: async function ({ from, cell }) {
-      const depositBlockNumber = getDepositBlockNumberFromWithdrawCell(cell);
-      const depositBlockHash = await rpc.getBlockHash(depositBlockNumber);
-      const depositHeader = await rpc.getHeader(depositBlockHash);
-      const withdrawHeader = await rpc.getHeader(cell.blockHash);
-
-      const txSkeletonMutable = TransactionSkeleton({
-        cellProvider: indexer,
-      }).asMutable();
-
-      // add input
-      const since =
-        "0x" +
-        dao
-          .calculateDaoEarliestSince(depositHeader.epoch, withdrawHeader.epoch)
-          .toString(16);
-      txSkeletonMutable.update("inputs", (inputs) => inputs.push(cell));
-      txSkeletonMutable.update("inputSinces", (inputSinces) =>
-        inputSinces.set(0, since),
-      );
-
-      // add output
-      const outCapacity =
-        "0x" +
-        dao
-          .calculateMaximumWithdraw(cell, depositHeader.dao, withdrawHeader.dao)
-          .toString(16);
-      txSkeletonMutable.update("outputs", (outputs) =>
-        outputs.push({
-          cellOutput: {
-            capacity: outCapacity,
-            type: null,
-            lock: cell.cellOutput.lock,
-          },
-          data: "0x",
-        }),
-      );
-
-      // add cell deps
-      txSkeletonMutable.update("cellDeps", (cellDeps) =>
-        cellDeps.push(
-          buildCellDep(ckbChainConfig.SCRIPTS.DAO),
-          buildCellDep(ckbChainConfig.SCRIPTS.JOYID_COBUILD_POC),
-        ),
-      );
-      // add header deps
-      txSkeletonMutable.update("headerDeps", (headerDeps) =>
-        headerDeps.push(depositBlockHash, cell.blockHash),
-      );
-
-      // add witness
-      txSkeletonMutable.update("witnesses", (witnesses) =>
-        witnesses.push(packDaoWitnessArgs(0)),
-      );
-
-      let txSkeleton = txSkeletonMutable.asImmutable();
-
-      // Allow pay fee from the unlocked cell directly.
-      return createBuildingPacketFromSkeleton(txSkeleton, 0);
     },
   };
 }

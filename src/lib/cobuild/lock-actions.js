@@ -28,9 +28,11 @@ export function finalizeWitnesses(buildingPacket) {
   const witnesses = Array.from(buildingPacket.value.payload.witnesses).map(
     (w) => w ?? "0x",
   );
-
   // If there's no SighashAll before SighashAllOnly, replace the first SighashAllOnly with SighashAll
   for (const i of witnesses.keys()) {
+    if (witnesses[i] === "0x") {
+      continue;
+    }
     const witnessType = parseWitnessType(witnesses[i]);
     if (witnessType === "SighashAll") {
       break;
@@ -75,13 +77,18 @@ function dispatchLockActions(
 ) {
   const script =
     buildingPacket.value.resolvedInputs.outputs[inputIndices[0]].lock;
-  if (script.codeHash === ckbChainConfig.SCRIPTS.JOYID_COBUILD_POC.CODE_HASH) {
-    return generalLockActions.prepareLockAction(
+  if (script.codeHash === ckbChainConfig.SCRIPTS.JOYID.CODE_HASH) {
+    return generalLockActions.prepareLockActionWithWitnessStore(
       buildingPacket,
       scriptHash,
-      inputIndices,
+      {
+        type: "WitnessArgsStore",
+        value: {
+          inputIndices,
+        },
+      },
       // reset WitnessArgs.lock to null
-      () => null,
+      () => `0x${"0".repeat(129 * 2)}`,
     );
   }
 

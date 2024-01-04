@@ -9,11 +9,10 @@ import { payFee } from "@/lib/cobuild/fee-manager";
 export default async function deposit(_prevState, formData, config) {
   config = config ?? useConfig();
 
-  const from = formData.get("from");
-  const amount = parseUnit(formData.get("amount"), "ckb");
+  const from = formData.get("lock");
 
   try {
-    let buildingPacket = await depositDao(config)({ from, amount });
+    let buildingPacket = await depositDao(config)(formData);
     buildingPacket = await payFee(
       buildingPacket,
       [{ address: from, feeRate: 1200 }],
@@ -25,6 +24,7 @@ export default async function deposit(_prevState, formData, config) {
       buildingPacket,
     };
   } catch (err) {
+    console.error(err.stack);
     return {
       error: err.toString(),
     };

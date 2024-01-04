@@ -29,13 +29,11 @@ bin/generate-blocks.sh 20
 
 ## Deploy Contracts to the Local Dev Chain
 
-Build contracts
+Download JoyID cells
 
 ```bash
-capsule build --release
+bin/download-joyid-cells.sh
 ```
-
-Or download files from [releases](https://github.com/doitian/ckb-dao-cobuild-poc/releases) and save them into the `build/release/` folder.
 
 Deploy using ckb-cli by running the following script
 

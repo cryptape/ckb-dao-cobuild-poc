@@ -2,17 +2,13 @@ import { blockchain } from "@ckb-lumos/base";
 import { bytes, molecule, number } from "@ckb-lumos/codec";
 const { Uint32LE, Uint32 } = number;
 const { option, table, vector, union } = molecule;
-const { Script, WitnessArgs } = blockchain;
+const { WitnessArgs } = blockchain;
 
 export { blockchain };
 
 export const Uint32Opt = option(Uint32);
 
 export const String = blockchain.Bytes;
-
-export const Address = union({ Script }, ["Script"]);
-
-export const AddressOpt = option(Address);
 
 export const Action = table(
   {
@@ -75,8 +71,6 @@ export const SighashAll = table({ seal: blockchain.Bytes, message: Message }, [
 ]);
 
 export const SighashAllOnly = table({ seal: blockchain.Bytes }, ["seal"]);
-
-export const SighashOnly = table({ seal: blockchain.Bytes }, ["seal"]);
 
 export const OtxStart = table(
   {

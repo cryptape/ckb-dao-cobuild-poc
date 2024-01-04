@@ -27,14 +27,14 @@ export function TransactionForm({ formAction, formState, address }) {
         <Alert color="failure">{formState.error}</Alert>
       ) : null}
       <div>
-        <Label htmlFor="from" value="From" />
-        <TextInput id="from" name="from" value={address} readOnly required />
+        <Label htmlFor="lock" value="From" />
+        <TextInput id="lock" name="lock" value={address} readOnly required />
       </div>
       <div>
-        <Label htmlFor="amount" value="Amount (CKB)" />
+        <Label htmlFor="capacity" value="Amount (CKB)" />
         <TextInput
-          id="amount"
-          name="amount"
+          id="capacity"
+          name="capacity"
           type="number"
           placeholder="0.0"
           step="0.00000001"
