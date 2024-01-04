@@ -58,7 +58,7 @@ test("cobuild layout", () => {
             capacity: "0x174876e800",
             lock: {
               codeHash:
-                "0x04dd652246af5f32ae10c04821ae32bff3dce37da52b6c60354c8ba867959e1e",
+                "0xd23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac",
               hashType: "type",
               args: "0xac4fb598d2e089e62406707d1aee4a27219515cc",
             },
@@ -82,7 +82,7 @@ test("cobuild layout", () => {
     outputBuildingPacket.value.lockActions[0].data,
   );
   expect(lockAction.digest).toBe(
-    "0xaed2bd2b5fb3d5967fc0eb792a14e4c980e96d6d516903a488113c6d21a3e04a",
+    "0xb878fcba4398b284a80c0d752154e7920b0aefc6296b31af23dff069d18f3760",
   );
 });
 
@@ -140,7 +140,7 @@ test("witness args layout", () => {
             capacity: "0x174876e800",
             lock: {
               codeHash:
-                "0x04dd652246af5f32ae10c04821ae32bff3dce37da52b6c60354c8ba867959e1e",
+                "0xd23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac",
               hashType: "type",
               args: "0xac4fb598d2e089e62406707d1aee4a27219515cc",
             },
@@ -164,6 +164,6 @@ test("witness args layout", () => {
     outputBuildingPacket.value.lockActions[0].data,
   );
   expect(lockAction.digest).toBe(
-    "0xeb97071b64e5ce0ebd3f46e63764920ae5f7b2093c90301d6bddfaf6ef50e91e",
+    "0xb878fcba4398b284a80c0d752154e7920b0aefc6296b31af23dff069d18f3760",
   );
 });
