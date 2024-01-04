@@ -9,7 +9,7 @@ export default async function withdraw(from, cell, config) {
   config = config ?? useConfig();
 
   try {
-    let buildingPacket = await withdrawDao(config)({ from, cell });
+    let buildingPacket = await withdrawDao(config)({ cell });
     buildingPacket = await payFee(
       buildingPacket,
       [{ address: from, feeRate: 1200 }],
@@ -21,6 +21,7 @@ export default async function withdraw(from, cell, config) {
       buildingPacket,
     };
   } catch (err) {
+    console.error(err.stack);
     return {
       error: err.toString(),
     };

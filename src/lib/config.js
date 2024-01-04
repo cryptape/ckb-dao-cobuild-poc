@@ -6,19 +6,14 @@ const CKB_CHAINS_CONFIGS = {
     EXPLORER_URL: "https://pudge.explorer.nervos.org",
     SCRIPTS: {
       ...predefined.AGGRON4.SCRIPTS,
-      JOYID_COBUILD_POC: {
-        CODE_HASH:
-          "0x04dd652246af5f32ae10c04821ae32bff3dce37da52b6c60354c8ba867959e1e",
-        HASH_TYPE: "type",
-        TX_HASH:
-          "0x53ba0900742334d2283f321ae17324efb3846fa38ba4bd47542f6d508db13b0b",
-        INDEX: "0x0",
-        DEP_TYPE: "code",
-      },
       JOYID: {
         CODE_HASH:
           "0xd23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac",
         HASH_TYPE: "type",
+        TX_HASH:
+          "0x4dcf3f3b09efac8995d6cbee87c5345e812d310094651e0c3d9a730f32dc9263",
+        INDEX: "0x0",
+        DEP_TYPE: "depGroup",
       },
     },
   },
@@ -45,12 +40,12 @@ function buildCkbChainConfig(ckbChain) {
   // for custom env, duplicate from AGGRON4
   const template = CKB_CHAINS_CONFIGS.AGGRON4;
 
-  const JOYID_COBUILD_POC = assign(
-    { ...template.SCRIPTS.JOYID_COBUILD_POC },
+  const JOYID = assign(
+    { ...template.SCRIPTS.JOYID },
     {
-      CODE_HASH: presence(process.env.NEXT_PUBLIC_JOYID_COBUILD_POC_CODE_HASH),
-      TX_HASH: presence(process.env.NEXT_PUBLIC_JOYID_COBUILD_POC_TX_HASH),
-      INDEX: presence(process.env.NEXT_PUBLIC_JOYID_COBUILD_POC_INDEX) ?? "0x0",
+      CODE_HASH: presence(process.env.NEXT_PUBLIC_JOYID_CODE_HASH),
+      TX_HASH: presence(process.env.NEXT_PUBLIC_JOYID_TX_HASH),
+      INDEX: presence(process.env.NEXT_PUBLIC_JOYID_INDEX) ?? "0x0",
     },
   );
 
@@ -65,8 +60,8 @@ function buildCkbChainConfig(ckbChain) {
     ...template,
     EXPLORER_URL: null,
     SCRIPTS: {
-      JOYID_COBUILD_POC,
-      JOYID: template.SCRIPTS.JOYID,
+      JOYID,
+      JOYID_APP: template.SCRIPTS.JOYID,
       DAO: {
         ...template.SCRIPTS.DAO,
         TX_HASH: tx0,

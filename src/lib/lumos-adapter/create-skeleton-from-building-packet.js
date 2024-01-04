@@ -1,3 +1,4 @@
+import { TransactionSkeleton } from "@ckb-lumos/helpers";
 import { Indexer } from "@ckb-lumos/ckb-indexer";
 
 export function createSkeletonFromBuildingPacket(

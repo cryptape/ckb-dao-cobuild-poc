@@ -1,7 +1,6 @@
 import { useConfig } from "@/lib/config";
 import {
   createScriptInfoFromHumanTemplate,
-  computeScriptHash,
   computeScriptInfoHash,
 } from "@/lib/cobuild/script-info";
 import { utils as lumosBaseUtils } from "@ckb-lumos/base";

@@ -13,9 +13,24 @@ export function prepareLockAction(
   inputIndices,
   createWitnessArgsPlaceholder,
 ) {
+  const witnessStore = chooseWitnessStore(buildingPacket, inputIndices);
+  return prepareLockActionWithWitnessStore(
+    buildingPacket,
+    scriptHash,
+    witnessStore,
+    createWitnessArgsPlaceholder,
+  );
+}
+
+export function prepareLockActionWithWitnessStore(
+  buildingPacket,
+  scriptHash,
+  witnessStore,
+  createWitnessArgsPlaceholder,
+) {
   const scriptInfo = { ...GeneralLockScriptInfo, scriptHash };
   const scriptInfoHash = ckbHash(ScriptInfo.pack(scriptInfo));
-  const witnessStore = chooseWitnessStore(buildingPacket, inputIndices);
+  const inputIndices = witnessStore.value.inputIndices;
   const digest = createDigest(
     buildingPacket,
     inputIndices,

@@ -1,10 +1,42 @@
 [[cells]]
-name = "joyid-cobuild-poc"
+name = "joyid"
 enable_type_id = true
-location = { file = "build/release/joyid-cobuild-poc" }
+location = { file = "build/release/joyid" }
 
-# Replace with your own lock if you want to unlock deployed cells.
-# For example the secp256k1 lock
+[[cells]]
+name = "joyid_dep1"
+enable_type_id = false
+location = { file = "build/release/joyid_dep1" }
+[[cells]]
+name = "joyid_dep2"
+enable_type_id = false
+location = { file = "build/release/joyid_dep2" }
+[[cells]]
+name = "joyid_dep3"
+enable_type_id = false
+location = { file = "build/release/joyid_dep3" }
+[[cells]]
+name = "joyid_dep4"
+enable_type_id = false
+location = { tx_hash = "0x8f8c79eb6671709633fe6a46de93c0fedc9c1b8a6527a18d3983879542635c9f", index = 3 }
+[[cells]]
+name = "joyid_dep5"
+enable_type_id = false
+location = { file = "build/release/joyid_dep5" }
+
+# Dep group cells
+[[dep_groups]]
+name = "joyid_dep_group"
+cells = [
+  "joyid",
+  "joyid_dep1",
+  "joyid_dep2",
+  "joyid_dep3",
+  "joyid_dep4",
+  "joyid_dep5",
+]
+
+# The lock script set to output cells
 [lock]
 code_hash = "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8"
 args = "0xc8328aabcd9b9e8e64fbc566c4385c3bdeb219d7"

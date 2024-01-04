@@ -1,4 +1,7 @@
+import { RPC } from "@ckb-lumos/rpc";
 import { common as commonScripts, dao } from "@ckb-lumos/common-scripts";
+import { bytes } from "@ckb-lumos/codec";
+import * as lumosHelpers from "@ckb-lumos/helpers";
 
 import { getCellWithoutCache } from "@/actions/get-cell";
 import {
@@ -6,9 +9,14 @@ import {
   packDaoWitnessArgs,
 } from "@/lib/dao";
 import { mergeBuildingPacketFromSkeleton } from "@/lib/lumos-adapter/create-building-packet-from-skeleton";
-import createSkeletonFromBuildingPacket from "@/lib/lumos-adapter/create-sckeleton-from-building-packet";
+import createSkeletonFromBuildingPacket from "@/lib/lumos-adapter/create-skeleton-from-building-packet";
 
-import { getDaoScriptInfo } from "./script-info";
+import { DaoActionData } from "./schema";
+import {
+  getDaoScriptInfo,
+  getDaoScriptHash,
+  getDaoScriptInfoHash,
+} from "./script-info";
 
 function buildCellDep(scriptInfo) {
   return {
@@ -46,16 +54,29 @@ async function onDeposit({ ckbChainConfig }, txSkeleton, op) {
   const { lock, capacity } = op;
   const from = op.from ?? lock;
 
-  txSkeleton = await dao.deposit(txSkeleton, from, lock, capacity, {
+  const fromAddress = lumosHelpers.encodeToAddress(from, {
     config: ckbChainConfig,
   });
+  const lockAddress = lumosHelpers.encodeToAddress(lock, {
+    config: ckbChainConfig,
+  });
+
+  txSkeleton = await dao.deposit(
+    txSkeleton,
+    fromAddress,
+    lockAddress,
+    capacity,
+    {
+      config: ckbChainConfig,
+    },
+  );
 
   // dao in @ckb-lumos/common-scripts only inject capacity for the secp256k1 lock, so do it manually.
   txSkeleton = await commonScripts.injectCapacity(
     txSkeleton,
-    [from],
-    amount,
-    from,
+    [fromAddress],
+    capacity,
+    fromAddress,
     undefined,
     { config: ckbChainConfig },
   );
@@ -68,10 +89,19 @@ async function onWithdraw({ ckbChainConfig, ckbRpcUrl }, txSkeleton, op) {
   const cell = await getCellWithoutCache(previousOutput, { ckbRpcUrl });
   const from = cell.cellOutput.lock;
 
-  // dao.withdraw only adds input from secp256k1, so add input manually
-  txSkeleton = await commonScripts.setupInputCell(txSkeleton, cell, from, {
+  const fromAddress = lumosHelpers.encodeToAddress(from, {
     config: ckbChainConfig,
   });
+
+  // dao.withdraw only adds input from secp256k1, so add input manually
+  txSkeleton = await commonScripts.setupInputCell(
+    txSkeleton,
+    cell,
+    fromAddress,
+    {
+      config: ckbChainConfig,
+    },
+  );
   if (op.to !== undefined) {
     txSkeleton.updateIn(
       ["outputs", txSkeleton.get("outputs").size - 1],
@@ -85,7 +115,7 @@ async function onWithdraw({ ckbChainConfig, ckbRpcUrl }, txSkeleton, op) {
     );
   }
   // let dao.withdraw helps to add cellDeps
-  txSkeleton = await dao.withdraw(txSkeleton, cell, from, {
+  txSkeleton = await dao.withdraw(txSkeleton, cell, fromAddress, {
     config: ckbChainConfig,
   });
 
@@ -94,7 +124,7 @@ async function onWithdraw({ ckbChainConfig, ckbRpcUrl }, txSkeleton, op) {
 
 async function onClaim({ ckbRpcUrl, ckbChainConfig }, txSkeleton, op) {
   const { previousOutput } = op;
-  const to = op.to ?? cell.cellOutput.lock;
+  const rpc = new RPC(ckbRpcUrl);
 
   const txSkeletonMutable = txSkeleton.asMutable();
 
@@ -103,6 +133,8 @@ async function onClaim({ ckbRpcUrl, ckbChainConfig }, txSkeleton, op) {
   const depositBlockHash = await rpc.getBlockHash(depositBlockNumber);
   const depositHeader = await rpc.getHeader(depositBlockHash);
   const withdrawHeader = await rpc.getHeader(cell.blockHash);
+
+  const to = op.to ?? cell.cellOutput.lock;
 
   // add input
   const since =
@@ -138,7 +170,7 @@ async function onClaim({ ckbRpcUrl, ckbChainConfig }, txSkeleton, op) {
     addDistinctCellDep(
       cellDeps,
       buildCellDep(ckbChainConfig.SCRIPTS.DAO),
-      buildCellDep(ckbChainConfig.SCRIPTS.JOYID_COBUILD_POC),
+      buildCellDep(ckbChainConfig.SCRIPTS.JOYID),
     ),
   );
   // add header deps
@@ -150,10 +182,9 @@ async function onClaim({ ckbRpcUrl, ckbChainConfig }, txSkeleton, op) {
   const depositBlockPos = txSkeletonMutable
     .get("headerDeps")
     .indexOf(depositBlockHash);
-  addDistinctHeaderDep(headerDeps, depositBlockHash, cell.blockHash),
-    txSkeletonMutable.update("witnesses", (witnesses) =>
-      witnesses.push(packDaoWitnessArgs(depositBlockPos)),
-    );
+  txSkeletonMutable.update("witnesses", (witnesses) =>
+    witnesses.push(packDaoWitnessArgs(depositBlockPos)),
+  );
 
   return [txSkeletonMutable.asImmutable(), op];
 }
@@ -188,13 +219,11 @@ export async function addOperations(config, buildingPacket, operations) {
   ];
 }
 
-export async function willAddAction(
-  config,
-  buildingPacket,
-  actionWithUnpackedData,
-) {
-  const data = actionWithUnpackedData.unpackedData;
-  const ops = data.type === "SingleOperation" ? [data.value] : data.value;
+export async function willAddAction(config, buildingPacket, actionData) {
+  const ops =
+    actionData.type === "SingleOperation"
+      ? [actionData.value]
+      : actionData.value;
 
   const [newBuildingPacket, newOps] = await addOperations(
     config,
@@ -204,11 +233,14 @@ export async function willAddAction(
   buildingPacket = newBuildingPacket;
 
   const action = {
-    ...actionWithUnpackedData,
-    data: DaoActionData.pack({
-      type: data.type,
-      value: data.type === "SingleOperation" ? newOps[0] : newOps,
-    }),
+    scriptHash: getDaoScriptHash(config),
+    scriptInfoHash: getDaoScriptInfoHash(config),
+    data: bytes.hexify(
+      DaoActionData.pack({
+        type: actionData.type,
+        value: actionData.type === "SingleOperation" ? newOps[0] : newOps,
+      }),
+    ),
   };
   const scriptInfo = getDaoScriptInfo(config);
 

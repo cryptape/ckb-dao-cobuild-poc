@@ -40,6 +40,7 @@ export default function SignForm({
         finalizeWitnesses(applyLockAction(buildingPacket, lockAction, seal)),
       );
     } catch (err) {
+      console.error(err.stack);
       setError(err.toString());
     }
   };

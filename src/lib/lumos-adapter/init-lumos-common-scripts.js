@@ -4,11 +4,8 @@ import {
 } from "@ckb-lumos/common-scripts";
 import { addCellDep } from "@ckb-lumos/common-scripts/lib/helper";
 
-export function buildJoyidCobuildPocLockInfo(ckbChainConfig) {
-  return buildLockInfo(
-    ckbChainConfig,
-    ckbChainConfig.SCRIPTS.JOYID_COBUILD_POC,
-  );
+export function buildJoyidLockInfo(ckbChainConfig) {
+  return buildLockInfo(ckbChainConfig, ckbChainConfig.SCRIPTS.JOYID);
 }
 
 export function buildLockInfo(ckbChainConfig, scriptInfo) {
@@ -119,7 +116,7 @@ let inited = false;
 export default function initLumosCommonScripts(ckbChainConfig) {
   if (!inited) {
     commonScripts.registerCustomLockScriptInfos([
-      buildJoyidCobuildPocLockInfo(ckbChainConfig),
+      buildJoyidLockInfo(ckbChainConfig),
     ]);
     inited = true;
   }

@@ -13,7 +13,7 @@ export default function createBuildingPacketFromSkeleton(txSkeleton) {
   };
   const payload = createTransactionFromSkeleton(txSkeleton);
 
-  const maxLockedOutput = txSkeletonMutable
+  const maxLockedOutput = txSkeleton
     .get("fixedEntries")
     .filter(({ field }) => field === "outputs")
     .maxBy(({ index }) => index);
@@ -43,7 +43,7 @@ export function mergeBuildingPacketFromSkeleton(buildingPacket, txSkeleton) {
   return {
     type: "BuildingPacketV1",
     value: {
-      ...buildingPacket,
+      ...buildingPacket.value,
       payload: newBuildingPacket.value.payload,
       resolvedInputs: newBuildingPacket.value.resolvedInputs,
       changeOutput: newBuildingPacket.value.changeOutput,
