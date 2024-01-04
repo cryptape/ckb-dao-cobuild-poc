@@ -20,11 +20,6 @@ function buildCellDep(scriptInfo) {
   };
 }
 
-function useLastOutputAsChangeOutput(txSkeleton) {
-  const size = txSkeleton.get("outputs").size;
-  return size > 1 ? size - 1 : null;
-}
-
 export default function createLumosCkbBuilder({ ckbRpcUrl, ckbChainConfig }) {
   initLumosCommonScripts(ckbChainConfig);
   const rpc = new RPC(ckbRpcUrl);
@@ -49,10 +44,7 @@ export default function createLumosCkbBuilder({ ckbRpcUrl, ckbChainConfig }) {
       );
 
       // lumos always add the target output first
-      return createBuildingPacketFromSkeleton(
-        txSkeleton,
-        useLastOutputAsChangeOutput(txSkeleton),
-      );
+      return createBuildingPacketFromSkeleton(txSkeleton);
     },
 
     depositDao: async function ({ from, amount }) {
@@ -73,10 +65,7 @@ export default function createLumosCkbBuilder({ ckbRpcUrl, ckbChainConfig }) {
         { config: ckbChainConfig },
       );
 
-      return createBuildingPacketFromSkeleton(
-        txSkeleton,
-        useLastOutputAsChangeOutput(txSkeleton),
-      );
+      return createBuildingPacketFromSkeleton(txSkeleton);
     },
 
     withdrawDao: async function ({ from, cell }) {
@@ -93,13 +82,10 @@ export default function createLumosCkbBuilder({ ckbRpcUrl, ckbChainConfig }) {
         config: ckbChainConfig,
       });
 
-      return createBuildingPacketFromSkeleton(
-        txSkeleton,
-        useLastOutputAsChangeOutput(txSkeleton),
-      );
+      return createBuildingPacketFromSkeleton(txSkeleton);
     },
 
-    claimDao: async function ({ from, cell }) {
+    claimDao: async function ({ cell }) {
       const depositBlockNumber = getDepositBlockNumberFromWithdrawCell(cell);
       const depositBlockHash = await rpc.getBlockHash(depositBlockNumber);
       const depositHeader = await rpc.getHeader(depositBlockHash);
@@ -157,7 +143,7 @@ export default function createLumosCkbBuilder({ ckbRpcUrl, ckbChainConfig }) {
       let txSkeleton = txSkeletonMutable.asImmutable();
 
       // Allow pay fee from the unlocked cell directly.
-      return createBuildingPacketFromSkeleton(txSkeleton, 0);
+      return createBuildingPacketFromSkeleton(txSkeleton);
     },
   };
 }

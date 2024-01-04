@@ -3,7 +3,6 @@ import {
   common as commonScripts,
 } from "@ckb-lumos/common-scripts";
 import { addCellDep } from "@ckb-lumos/common-scripts/lib/helper";
-import { addressToScript } from "@ckb-lumos/helpers";
 
 export function buildJoyidCobuildPocLockInfo(ckbChainConfig) {
   return buildLockInfo(
