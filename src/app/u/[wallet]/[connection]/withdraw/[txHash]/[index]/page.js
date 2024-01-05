@@ -1,4 +1,4 @@
-import { useConfig } from "@/lib/config";
+import { getConfig } from "@/lib/config";
 import * as walletSelector from "@/lib/wallet/selector";
 
 import WithdrawForm from "./form";
@@ -7,7 +7,7 @@ export default function Withdraw({
   params: { wallet, connection, txHash, index },
   config,
 }) {
-  config = config ?? useConfig();
+  config = config ?? getConfig();
   const address = walletSelector.address(
     wallet,
     connection,

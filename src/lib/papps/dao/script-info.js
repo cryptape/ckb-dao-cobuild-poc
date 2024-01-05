@@ -1,4 +1,4 @@
-import { useConfig } from "@/lib/config";
+import { getConfig } from "@/lib/config";
 import {
   createScriptInfoFromHumanTemplate,
   computeScriptInfoHash,
@@ -8,7 +8,7 @@ import { utils as lumosBaseUtils } from "@ckb-lumos/base";
 import { SCHEMA, MESSAGE_TYPE } from "./schema";
 
 const { computeScriptHash } = lumosBaseUtils;
-const CONFIG = useConfig();
+const CONFIG = getConfig();
 
 export function getDaoHumanScriptInfoTemplate() {
   return {

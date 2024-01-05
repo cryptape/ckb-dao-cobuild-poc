@@ -4,10 +4,10 @@ import { parseUnit } from "@ckb-lumos/bi";
 import { transferCkb } from "@/lib/cobuild/publishers";
 import { prepareLockActions } from "@/lib/cobuild/lock-actions";
 import { payFee } from "@/lib/cobuild/fee-manager";
-import { useConfig } from "@/lib/config";
+import { getConfig } from "@/lib/config";
 
 export default async function transfer(_prevState, formData, config) {
-  config = config ?? useConfig();
+  config = config ?? getConfig();
 
   const from = formData.get("from");
   const to = formData.get("to");

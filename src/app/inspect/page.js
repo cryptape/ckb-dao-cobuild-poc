@@ -1,8 +1,8 @@
-import { useConfig } from "@/lib/config";
+import { getConfig } from "@/lib/config";
 
 export default function InspectPage() {
   const info = {
-    config: useConfig(),
+    config: getConfig(),
   };
 
   return <pre>{JSON.stringify(info, null, 2)}</pre>;

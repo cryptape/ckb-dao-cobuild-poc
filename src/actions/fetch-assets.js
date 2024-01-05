@@ -1,11 +1,11 @@
 "use server";
 
 import { cache } from "react";
-import { useConfig } from "@/lib/config";
+import { getConfig } from "@/lib/config";
 import { fetchAssets as fetchAssetsWithConfig } from "@/lib/cobuild/assets-manager";
 
 export async function fetchAssetsWithoutCache(address, config) {
-  config = config ?? useConfig();
+  config = config ?? getConfig();
   return await fetchAssetsWithConfig(address, config);
 }
 

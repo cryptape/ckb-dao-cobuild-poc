@@ -3,11 +3,11 @@
 import { cache } from "react";
 import { RPC } from "@ckb-lumos/rpc";
 
-import { useConfig } from "@/lib/config";
+import { getConfig } from "@/lib/config";
 import * as dao from "@/lib/dao";
 
 export async function getWithdrawCellRewardWithoutCache(outPoint, config) {
-  const { ckbRpcUrl } = config ?? useConfig();
+  const { ckbRpcUrl } = config ?? getConfig();
   const rpc = new RPC(ckbRpcUrl);
 
   const liveCellResp = await rpc.getLiveCell(outPoint, true);

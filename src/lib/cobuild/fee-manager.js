@@ -64,7 +64,6 @@ function storeWitnessForFeeEstimation(
       buildingPacket,
       scriptHash,
       inputIndices,
-      // Variable length, but 500 is usually enough.
       () => `0x${"0".repeat(65 * 2)}`,
     );
   }

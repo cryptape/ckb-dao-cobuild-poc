@@ -1,4 +1,4 @@
-import { useConfig } from "@/lib/config";
+import { getConfig } from "@/lib/config";
 
 import { getDaoHumanScriptInfoTemplate } from "./script-info";
 import {
@@ -12,7 +12,7 @@ import {
 import bindCallbacks from "./lumos-callbacks";
 
 export function getDaoPappRegistry(config) {
-  config = config ?? useConfig();
+  config = config ?? getConfig();
 
   return {
     humanScriptInfoTemplate: getDaoHumanScriptInfoTemplate(),

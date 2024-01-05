@@ -1,9 +1,9 @@
-import { useConfig } from "@/lib/config";
+import { getConfig } from "@/lib/config";
 import Connector from "./connector";
 import Disclaimer from "./disclaimer.js";
 
 export default function RootPage({ config }) {
-  config = config ?? useConfig();
+  config = config ?? getConfig();
   return (
     <main>
       <Disclaimer config={config} />

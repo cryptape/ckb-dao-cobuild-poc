@@ -110,7 +110,7 @@ export const DEFAULT_CKB_RPC_URL = "https://testnet.ckbapp.dev/";
 //   ckbRpcUrl,
 //   ckbChainConfig
 // }
-export const useConfig = (() => {
+export const getConfig = (() => {
   const ckbChain =
     presence(process.env.NEXT_PUBLIC_CKB_CHAIN) ?? DEFAULT_CKB_CHAIN;
   const config = {
@@ -125,7 +125,7 @@ export const useConfig = (() => {
   };
 })();
 
-export function useTestnetConfig() {
+export function getTestnetConfig() {
   return {
     ckbChain: DEFAULT_CKB_RPC_URL,
     ckbRpcUrl: DEFAULT_CKB_CHAIN,

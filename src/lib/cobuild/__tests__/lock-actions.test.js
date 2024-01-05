@@ -1,8 +1,8 @@
-import { useTestnetConfig } from "../../config";
+import { getTestnetConfig } from "../../config";
 import { prepareLockActions } from "../lock-actions";
 import { GeneralLockAction, chooseWitnessStore } from "../general-lock-actions";
 
-const { ckbChainConfig } = useTestnetConfig();
+const { ckbChainConfig } = getTestnetConfig();
 
 test("cobuild layout", () => {
   const tx = {
