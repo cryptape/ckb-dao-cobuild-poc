@@ -29,10 +29,10 @@ bin/generate-blocks.sh 20
 
 ## Deploy Contracts to the Local Dev Chain
 
-Download JoyID cells
+Download contract cells
 
 ```bash
-bin/download-joyid-cells.sh
+bin/download-contracts.sh
 ```
 
 Deploy using ckb-cli by running the following script
@@ -51,7 +51,7 @@ Start the local development server.
 pnpm dev
 ```
 
-Connect JoyID and copy the address displayed at the top of the page.
+Connect a wallet and copy the CKB address displayed at the top of the page.
 
 Transfer some CKB tokens from the miner account to the copied address. Replace `ckbt1qz...` with the real address in the following command.
 
