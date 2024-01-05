@@ -1,12 +1,18 @@
 import { useConfig } from "@/lib/config";
+import * as walletSelector from "@/lib/wallet/selector";
 
 import WithdrawForm from "./form";
 
 export default function Withdraw({
-  params: { address, txHash, index },
+  params: { wallet, connection, txHash, index },
   config,
 }) {
   config = config ?? useConfig();
+  const address = walletSelector.address(
+    wallet,
+    connection,
+    config.ckbChainConfig,
+  );
 
   const outPoint = {
     txHash: `0x${txHash}`,

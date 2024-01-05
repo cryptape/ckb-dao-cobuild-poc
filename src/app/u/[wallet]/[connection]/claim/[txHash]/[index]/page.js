@@ -1,9 +1,18 @@
 import { useConfig } from "@/lib/config";
+import * as walletSelector from "@/lib/wallet/selector";
 
 import ClaimForm from "./form";
 
-export default function Claim({ params: { address, txHash, index }, config }) {
+export default function Claim({
+  params: { wallet, connection, txHash, index },
+  config,
+}) {
   config = config ?? useConfig();
+  const address = walletSelector.address(
+    wallet,
+    connection,
+    config.ckbChainConfig,
+  );
 
   const outPoint = {
     txHash: `0x${txHash}`,

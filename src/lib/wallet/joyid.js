@@ -1,75 +1,40 @@
 import * as joyid from "@joyid/ckb";
 import { bytes } from "@ckb-lumos/codec";
-import { utils as lumosBaseUtils } from "@ckb-lumos/base";
 import * as lumosHelpers from "@ckb-lumos/helpers";
 import base64 from "base64-js";
 
-const ckbHash = lumosBaseUtils.ckbHash;
+export const title = "Joyid";
 
-function buildScript(pubkey, scriptInfo) {
-  // 0001: webauthn
-  // + first 20 bytes of pubkey hash
-  const args = `0x0001${ckbHash(pubkey).substring(2, 42)}`;
-  return {
+// Connects to the wallet.
+export async function connect() {
+  const connection = await joyid.connect();
+  return [connection.address];
+}
+
+// Gets the CKB address.
+export function address(connection, ckbChainConfig) {
+  const { args } = lumosHelpers.addressToScript(connection, {
+    config: ckbChainConfig,
+  });
+  const scriptInfo = ckbChainConfig.SCRIPTS.JOYID;
+  const script = {
     codeHash: scriptInfo.CODE_HASH,
     hashType: scriptInfo.HASH_TYPE,
     args,
   };
-}
-
-// Connects to the wallet.
-export async function connect() {
-  return await joyid.connect();
-}
-
-// Gets the CKB address.
-//
-// Calls this function only when wallet is connected.
-export function address(connection, ckbChainConfig) {
-  if (connection !== null && connection !== undefined) {
-    // for non-dev, just return the offical address
-    if (ckbChainConfig.SCRIPTS.JOYID_APP === undefined) {
-      return connection.address;
-    }
-
-    const scriptInfo = ckbChainConfig.SCRIPTS.JOYID;
-    const script = buildScript(`0x${connection.pubkey}`, scriptInfo);
-    return lumosHelpers.encodeToAddress(script, {
-      config: ckbChainConfig,
-    });
-  }
-
-  return null;
+  return lumosHelpers.encodeToAddress(script, {
+    config: ckbChainConfig,
+  });
 }
 
 // Calls this function only when wallet is connected.
-export async function sign(address, message, ckbChainConfig) {
-  const resp = await joyid.signChallenge(
-    message,
-    toJoyidAddress(address, ckbChainConfig),
-  );
+export async function sign(connection, message) {
+  const resp = await joyid.signChallenge(message, connection);
 
   const seal = ["0x01", resp.pubkey];
   seal.push(bytes.hexify(signatureFromDer(resp.signature)).substring(2));
   seal.push(bytes.hexify(urlSafeBase64Decode(resp.message)).substring(2));
   return seal.join("");
-}
-
-function toJoyidAddress(address, ckbChainConfig) {
-  if (ckbChainConfig.SCRIPTS.JOYID_APP === undefined) {
-    return address;
-  }
-
-  const scriptInfo = ckbChainConfig.SCRIPTS.JOYID_APP;
-  const { args } = lumosHelpers.addressToScript(address, {
-    config: ckbChainConfig,
-  });
-  const joyidScript = {
-    codeHash: scriptInfo.CODE_HASH,
-    hashType: scriptInfo.HASH_TYPE,
-    args,
-  };
-  return lumosHelpers.encodeToAddress(joyidScript, { config: ckbChainConfig });
 }
 
 function urlSafeBase64Decode(str) {
