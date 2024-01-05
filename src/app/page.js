@@ -1,5 +1,5 @@
 import { useConfig } from "@/lib/config";
-import RootHeader from "./header";
+import Connector from "./connector";
 import Disclaimer from "./disclaimer.js";
 
 export default function RootPage({ config }) {
@@ -7,7 +7,7 @@ export default function RootPage({ config }) {
   return (
     <main>
       <Disclaimer config={config} />
-      <RootHeader config={config} />
+      <Connector config={config} />
     </main>
   );
 }

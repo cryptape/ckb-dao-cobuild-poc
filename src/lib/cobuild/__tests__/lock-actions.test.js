@@ -1,10 +1,8 @@
-import { number } from "@ckb-lumos/codec";
-
-import { useConfig } from "../../config";
+import { useTestnetConfig } from "../../config";
 import { prepareLockActions } from "../lock-actions";
 import { GeneralLockAction, chooseWitnessStore } from "../general-lock-actions";
 
-const { ckbChainConfig } = useConfig();
+const { ckbChainConfig } = useTestnetConfig();
 
 test("cobuild layout", () => {
   const tx = {

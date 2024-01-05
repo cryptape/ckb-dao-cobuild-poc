@@ -23,6 +23,8 @@
     "@joyid/ckb": "^0.0.2",
     "@tailwindcss/typography": "^0.5.10",
     "base64-js": "^1.5.1",
+    "bech32": "^2.0.0",
+    "bs58": "^5.0.0",
     "flowbite": "^2.2.0",
     "flowbite-react": "^0.7.2",
     "moment": "^2.30.0",

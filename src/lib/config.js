@@ -15,6 +15,21 @@ const CKB_CHAINS_CONFIGS = {
         INDEX: "0x0",
         DEP_TYPE: "depGroup",
       },
+      AUTH: {
+        TX_HASH:
+          "0xd4f72f0504373ff8effadf44f92c46a0062774fb585ebcacc24eb47b98e2d66a",
+        INDEX: "0x0",
+        DEP_TYPE: "code",
+      },
+      UNISAT: {
+        CODE_HASH:
+          "0xd7aac16927b2d572b3803c1f68e49d082d3acc2af2614c9be752ff9cec5dc3ea",
+        HASH_TYPE: "data1",
+        TX_HASH:
+          "0xe842b43df31c92d448fa345d60a6df3e03aaab19ef88921654bf95c673a26872",
+        INDEX: "0x0",
+        DEP_TYPE: "code",
+      },
     },
   },
 };
@@ -45,7 +60,15 @@ function buildCkbChainConfig(ckbChain) {
     {
       CODE_HASH: presence(process.env.NEXT_PUBLIC_JOYID_CODE_HASH),
       TX_HASH: presence(process.env.NEXT_PUBLIC_JOYID_TX_HASH),
-      INDEX: presence(process.env.NEXT_PUBLIC_JOYID_INDEX) ?? "0x0",
+    },
+  );
+  const UNISAT = assign(
+    { ...template.SCRIPTS.JOYID },
+    {
+      CODE_HASH: presence(process.env.NEXT_PUBLIC_UNISAT_CODE_HASH),
+      HASH_TYPE: "type",
+      TX_HASH: presence(process.env.NEXT_PUBLIC_AUTH_TX_HASH),
+      DEP_TYPE: "depGroup",
     },
   );
 
@@ -61,7 +84,8 @@ function buildCkbChainConfig(ckbChain) {
     EXPLORER_URL: null,
     SCRIPTS: {
       JOYID,
-      JOYID_APP: template.SCRIPTS.JOYID,
+      UNISAT,
+      AUTH: template.SCRIPTS.AUTH,
       DAO: {
         ...template.SCRIPTS.DAO,
         TX_HASH: tx0,
@@ -100,3 +124,11 @@ export const useConfig = (() => {
     return config;
   };
 })();
+
+export function useTestnetConfig() {
+  return {
+    ckbChain: DEFAULT_CKB_RPC_URL,
+    ckbRpcUrl: DEFAULT_CKB_CHAIN,
+    ckbChainConfig: CKB_CHAINS_CONFIGS[DEFAULT_CKB_CHAIN],
+  };
+}

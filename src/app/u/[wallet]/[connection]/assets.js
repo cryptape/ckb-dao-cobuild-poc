@@ -7,7 +7,7 @@ import Loading from "./loading";
 
 export const revalidate = 12;
 
-export function CkbSection({ address, ckbBalance }) {
+export function CkbSection({ wallet, connection, address, ckbBalance }) {
   return (
     <section>
       <h2>CKB</h2>
@@ -16,7 +16,7 @@ export function CkbSection({ address, ckbBalance }) {
       </p>
       <Button
         as={Link}
-        href={`/accounts/${address}/transfer`}
+        href={`/u/${wallet}/${connection}/transfer`}
         className="not-prose"
       >
         Transfer
@@ -25,20 +25,25 @@ export function CkbSection({ address, ckbBalance }) {
   );
 }
 
-export function DaoSection({ address, daoCells }) {
+export function DaoSection({ wallet, connection, address, daoCells }) {
   return (
     <section>
       <h2>DAO</h2>
       <aside className="mb-5">
         <Button
           as={Link}
-          href={`/accounts/${address}/deposit`}
+          href={`/u/${wallet}/${connection}/deposit`}
           className="not-prose"
         >
           Deposit
         </Button>
       </aside>
-      <DaoCells address={address} daoCells={daoCells} />
+      <DaoCells
+        wallet={wallet}
+        connection={connection}
+        address={address}
+        daoCells={daoCells}
+      />
     </section>
   );
 }
@@ -58,13 +63,14 @@ export function AssetsFallback() {
   );
 }
 
-export default async function Assets({ address }) {
+export default async function Assets({ wallet, connection, address }) {
   const { ckbBalance, daoCells } = await fetchAssetsWithCache(address);
+  const childProps = { wallet, connection, address };
 
   return (
     <>
-      <CkbSection address={address} ckbBalance={ckbBalance} />
-      <DaoSection address={address} daoCells={daoCells} />
+      <CkbSection ckbBalance={ckbBalance} {...childProps} />
+      <DaoSection daoCells={daoCells} {...childProps} />
     </>
   );
 }

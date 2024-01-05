@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button, Alert } from "flowbite-react";
 import { addressToScript } from "@ckb-lumos/helpers";
 
-import * as joyid from "@/lib/wallet/joyid";
+import * as walletSelector from "@/lib/wallet/selector";
 import useWithdrawCellRewards from "@/hooks/use-withdraw-cell-rewards";
 import SubmitButton from "@/components/submit-button";
 import BuildingPacketReview from "@/lib/cobuild/react/building-packet-review";
@@ -18,6 +18,8 @@ import {
 } from "@/lib/cobuild/general-lock-actions";
 
 export default function SignForm({
+  wallet,
+  connection,
   address,
   buildingPacket,
   ckbChainConfig,
@@ -31,9 +33,10 @@ export default function SignForm({
   const lockActionData = GeneralLockAction.unpack(lockAction.data);
   const sign = async () => {
     try {
-      const seal = await joyid.sign(
-        address,
-        lockActionData.digest.substring(2),
+      const seal = await walletSelector.sign(
+        wallet,
+        connection,
+        lockActionData.digest,
         ckbChainConfig,
       );
       onSubmit(

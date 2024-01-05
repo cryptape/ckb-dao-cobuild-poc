@@ -5,10 +5,22 @@ import {
 import { addCellDep } from "@ckb-lumos/common-scripts/lib/helper";
 
 export function buildJoyidLockInfo(ckbChainConfig) {
-  return buildLockInfo(ckbChainConfig, ckbChainConfig.SCRIPTS.JOYID);
+  return buildLockInfo(ckbChainConfig, ckbChainConfig.SCRIPTS.JOYID, []);
 }
 
-export function buildLockInfo(ckbChainConfig, scriptInfo) {
+export function buildUniSatLockInfo(ckbChainConfig) {
+  const UNISAT = ckbChainConfig.SCRIPTS.UNISAT;
+  // Require the secp256k1 data cell
+  const extraScripts = [ckbChainConfig.SCRIPTS.SECP256K1_BLAKE160];
+  // if not depGroup, add AUTH as well
+  if (UNISAT.DEP_TYPE === "code") {
+    extraScripts.push(ckbChainConfig.SCRIPTS.AUTH);
+  }
+
+  return buildLockInfo(ckbChainConfig, UNISAT, extraScripts);
+}
+
+export function buildLockInfo(ckbChainConfig, scriptInfo, extraScripts) {
   return {
     codeHash: scriptInfo.CODE_HASH,
     hashType: scriptInfo.HASH_TYPE,
@@ -95,15 +107,23 @@ export function buildLockInfo(ckbChainConfig, scriptInfo) {
         //===========================
         // II. CellDeps
         //===========================
-        const scriptOutPoint = {
-          txHash: scriptInfo.TX_HASH,
-          index: scriptInfo.INDEX,
-        };
         // The helper method addCellDep avoids adding duplicated cell deps.
         addCellDep(txMutable, {
-          outPoint: scriptOutPoint,
+          outPoint: {
+            txHash: scriptInfo.TX_HASH,
+            index: scriptInfo.INDEX,
+          },
           depType: scriptInfo.DEP_TYPE,
         });
+        for (const extraScriptInfo of extraScripts) {
+          addCellDep(txMutable, {
+            outPoint: {
+              txHash: extraScriptInfo.TX_HASH,
+              index: extraScriptInfo.INDEX,
+            },
+            depType: extraScriptInfo.DEP_TYPE,
+          });
+        }
 
         return txMutable.asImmutable();
       },
@@ -117,6 +137,7 @@ export default function initLumosCommonScripts(ckbChainConfig) {
   if (!inited) {
     commonScripts.registerCustomLockScriptInfos([
       buildJoyidLockInfo(ckbChainConfig),
+      buildUniSatLockInfo(ckbChainConfig),
     ]);
     inited = true;
   }

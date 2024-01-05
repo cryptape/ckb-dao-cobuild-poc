@@ -81,7 +81,13 @@ function LoadCell({ outPoint, pending, onConfirm }) {
   return cell ? <CellDetails {...childProps} /> : <Loading />;
 }
 
-export default function ClaimForm({ address, outPoint, config }) {
+export default function ClaimForm({
+  wallet,
+  connection,
+  address,
+  outPoint,
+  config,
+}) {
   const router = useRouter();
   const [formState, setFormState] = useState({});
   const [pending, setPending] = useState(false);
@@ -118,6 +124,8 @@ export default function ClaimForm({ address, outPoint, config }) {
   ) {
     return (
       <SignForm
+        wallet={wallet}
+        connection={connection}
         address={address}
         buildingPacket={formState.buildingPacket}
         ckbChainConfig={config.ckbChainConfig}

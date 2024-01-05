@@ -1,6 +1,8 @@
 .env
 .env.*
-/migrations
+/migrations/dev
+/migrations/joyid
+/migrations/ckb_auth
 
 # CKB
 /ckb-miner.toml

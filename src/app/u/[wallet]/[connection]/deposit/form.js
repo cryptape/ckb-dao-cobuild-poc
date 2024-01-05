@@ -8,7 +8,7 @@ import { Label, TextInput, Alert } from "flowbite-react";
 import Capacity from "@/components/capacity";
 import SubmitButton from "@/components/submit-button";
 import { fetchAssetsWithCache } from "@/actions/fetch-assets";
-import transfer from "@/actions/transfer";
+import deposit from "@/actions/deposit";
 import Loading from "../loading";
 import SignForm from "../sign-form";
 import SubmitBuildingPacket from "../submit-building-packet";
@@ -27,22 +27,18 @@ export function TransactionForm({ formAction, formState, address }) {
         <Alert color="failure">{formState.error}</Alert>
       ) : null}
       <div>
-        <Label htmlFor="from" value="From" />
-        <TextInput id="from" name="from" value={address} readOnly required />
+        <Label htmlFor="lock" value="From" />
+        <TextInput id="lock" name="lock" value={address} readOnly required />
       </div>
       <div>
-        <Label htmlFor="to" value="To" />
-        <TextInput id="to" name="to" placeholder="ckt..." required />
-      </div>
-      <div>
-        <Label htmlFor="amount" value="Amount (CKB)" />
+        <Label htmlFor="capacity" value="Amount (CKB)" />
         <TextInput
-          id="amount"
-          name="amount"
+          id="capacity"
+          name="capacity"
           type="number"
           placeholder="0.0"
           step="0.00000001"
-          min="61"
+          min="77"
           required
           helperText={
             <>
@@ -56,14 +52,14 @@ export function TransactionForm({ formAction, formState, address }) {
           }
         />
       </div>
-      <SubmitButton>Transfer</SubmitButton>
+      <SubmitButton>Deposit</SubmitButton>
     </form>
   );
 }
 
-export default function TransferForm({ address, config }) {
+export default function DepositForm({ wallet, connection, address, config }) {
   const router = useRouter();
-  const [formState, formAction] = useFormState(transfer, {});
+  const [formState, formAction] = useFormState(deposit, {});
   const [signedBuildingPacket, setSignedBuildingPacket] = useState(null);
   const back = () => router.back();
 
@@ -78,6 +74,8 @@ export default function TransferForm({ address, config }) {
   ) {
     return (
       <SignForm
+        wallet={wallet}
+        connection={connection}
         address={address}
         buildingPacket={formState.buildingPacket}
         ckbChainConfig={config.ckbChainConfig}

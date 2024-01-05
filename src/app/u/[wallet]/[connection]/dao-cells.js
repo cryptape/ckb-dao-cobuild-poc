@@ -17,7 +17,7 @@ function cellKey(cell) {
   )}`;
 }
 
-export function DepositRow({ address, cell, tipHeader }) {
+export function DepositRow({ wallet, connection, cell, tipHeader }) {
   const depositHeader = useHeaderByNumber(cell.blockNumber);
   const key = cellKey(cell);
 
@@ -46,7 +46,7 @@ export function DepositRow({ address, cell, tipHeader }) {
       <td>
         <Button
           as={Link}
-          href={`/accounts/${address}/withdraw/${key}`}
+          href={`/u/${wallet}/${connection}/withdraw/${key}`}
           color="light"
           className="not-prose inline-block"
         >
@@ -57,7 +57,13 @@ export function DepositRow({ address, cell, tipHeader }) {
   );
 }
 
-export function DepositsTable({ address, cells, tipHeader }) {
+export function DepositsTable({
+  wallet,
+  connection,
+  address,
+  cells,
+  tipHeader,
+}) {
   return (
     <table className="table-auto">
       <thead>
@@ -70,13 +76,15 @@ export function DepositsTable({ address, cells, tipHeader }) {
         </tr>
       </thead>
       <tbody>
-        {cells.map((cell) => DepositRow({ address, cell, tipHeader }))}
+        {cells.map((cell) =>
+          DepositRow({ wallet, connection, address, cell, tipHeader }),
+        )}
       </tbody>
     </table>
   );
 }
 
-export function WithdrawRow({ address, cell, tipHeader }) {
+export function WithdrawRow({ wallet, connection, cell, tipHeader }) {
   const depositBlockNumber = dao.getDepositBlockNumberFromWithdrawCell(cell);
   const depositHeader = useHeaderByNumber(depositBlockNumber);
   const withdrawHeader = useHeaderByNumber(cell.blockNumber);
@@ -112,7 +120,7 @@ export function WithdrawRow({ address, cell, tipHeader }) {
               <Button
                 as={Link}
                 color="green"
-                href={`/accounts/${address}/claim/${key}`}
+                href={`/u/${wallet}/${connection}/claim/${key}`}
                 className="not-prose inline-block"
               >
                 Claim
@@ -129,7 +137,13 @@ export function WithdrawRow({ address, cell, tipHeader }) {
   );
 }
 
-export function WithdrawsTable({ address, cells, tipHeader }) {
+export function WithdrawsTable({
+  wallet,
+  connection,
+  address,
+  cells,
+  tipHeader,
+}) {
   return (
     <table className="table-auto">
       <thead>
@@ -140,25 +154,24 @@ export function WithdrawsTable({ address, cells, tipHeader }) {
         </tr>
       </thead>
       <tbody>
-        {cells.map((cell) => WithdrawRow({ address, cell, tipHeader }))}
+        {cells.map((cell) =>
+          WithdrawRow({ wallet, connection, address, cell, tipHeader }),
+        )}
       </tbody>
     </table>
   );
 }
 
-export default function DaoCells({ address, daoCells }) {
+export default function DaoCells({ wallet, connection, address, daoCells }) {
   const tipHeader = useTipHeader();
   const { deposits, withdraws } = daoCells;
+  const childProps = { wallet, connection, address, tipHeader };
   return (
     <>
       <h3>Deposits</h3>
-      <DepositsTable address={address} cells={deposits} tipHeader={tipHeader} />
+      <DepositsTable cells={deposits} {...childProps} />
       <h3>Withdraws</h3>
-      <WithdrawsTable
-        address={address}
-        cells={withdraws}
-        tipHeader={tipHeader}
-      />
+      <WithdrawsTable cells={withdraws} {...childProps} />
     </>
   );
 }

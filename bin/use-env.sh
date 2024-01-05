@@ -23,12 +23,25 @@ case "${1:-}" in
   ;;
 esac
 
+JOYID_INFO_FILE="$(ls migrations/joyid/*.json | grep -v deployment | head -n 1)"
+CKB_AUTH_INFO_FILE="$(ls migrations/ckb_auth/*.json | grep -v deployment | head -n 1)"
+
 sed -n \
   -e 's/,$//' \
   -e 's/^ *"type_id": /NEXT_PUBLIC_JOYID_CODE_HASH=/p' \
-  "$@" | head -1
+  "$JOYID_INFO_FILE" | head -1
 
 sed -n \
   -e 's/,$//' \
   -e 's/^ *"tx_hash": /NEXT_PUBLIC_JOYID_TX_HASH=/p' \
-  "$@" | tail -1
+  "$JOYID_INFO_FILE" | tail -1
+
+sed -n \
+  -e 's/,$//' \
+  -e 's/^ *"type_id": "/NEXT_PUBLIC_UNISAT_CODE_HASH="/p' \
+  "$CKB_AUTH_INFO_FILE" | head -1
+
+sed -n \
+  -e 's/,$//' \
+  -e 's/^ *"tx_hash": /NEXT_PUBLIC_AUTH_TX_HASH=/p' \
+  "$CKB_AUTH_INFO_FILE" | tail -1

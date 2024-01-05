@@ -43,7 +43,7 @@ export default async function sendTx(tx, config) {
   try {
     const txState = await sendTxInner(tx, txHash, config);
     if (txState.txStatus.status === "committed") {
-      revalidatePath("/accounts/[address]", "layout");
+      revalidatePath("/u/[wallet]/[connection]", "layout");
     }
     return txState;
   } catch (err) {
