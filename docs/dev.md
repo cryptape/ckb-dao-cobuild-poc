@@ -65,11 +65,13 @@ Mine some blocks to commit the transfer transaction.
 bin/generate-blocks.sh 3
 ```
 
-Now it's OK to run the web app with the local dev chain. Start a CKB miner process in another terminal window to commit transactions automatically, or run `bin/generate-blocks.sh 3` to commit transactions manually.
+Now it's OK to run the web app with the local dev chain. Start a dev miner process in another terminal window to commit transactions automatically:
 
 ```bash
-ckb miner
+bin/run-dev-miner.sh
 ```
+
+Or run `bin/generate-blocks.sh 3` to commit transactions manually.
 
 To test the phase 2 withdraw, use the command `bin/generate-epochs.sh 180` to generate 180 epochs, which is a full DAO cycle.
 
