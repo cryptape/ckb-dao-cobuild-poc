@@ -25,20 +25,25 @@ export function CkbSection({ wallet, connection, address, ckbBalance }) {
   );
 }
 
-export function DaoSection({ address, daoCells }) {
+export function DaoSection({ wallet, connection, address, daoCells }) {
   return (
     <section>
       <h2>DAO</h2>
       <aside className="mb-5">
         <Button
           as={Link}
-          href={`/accounts/${address}/deposit`}
+          href={`/u/${wallet}/${connection}/deposit`}
           className="not-prose"
         >
           Deposit
         </Button>
       </aside>
-      <DaoCells address={address} daoCells={daoCells} />
+      <DaoCells
+        wallet={wallet}
+        connection={connection}
+        address={address}
+        daoCells={daoCells}
+      />
     </section>
   );
 }

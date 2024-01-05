@@ -14,7 +14,12 @@ export default function Deposit({ params: { wallet, connection }, config }) {
   return (
     <main>
       <h2>Deposit</h2>
-      <DepositForm address={address} config={config} />
+      <DepositForm
+        wallet={wallet}
+        connection={connection}
+        address={address}
+        config={config}
+      />
     </main>
   );
 }

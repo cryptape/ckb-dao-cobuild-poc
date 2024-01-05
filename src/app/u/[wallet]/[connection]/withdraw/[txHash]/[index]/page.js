@@ -19,7 +19,7 @@ export default function Withdraw({
     index: `0x${index.toString(16)}`,
   };
 
-  const childProps = { address, outPoint, config };
+  const childProps = { wallet, connection, address, outPoint, config };
 
   return (
     <main>

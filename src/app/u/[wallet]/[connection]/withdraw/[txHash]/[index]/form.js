@@ -78,7 +78,13 @@ function LoadCell({ outPoint, pending, onConfirm }) {
   return cell ? <CellDetails {...childProps} /> : <Loading />;
 }
 
-export default function WithdrawForm({ address, outPoint, config }) {
+export default function WithdrawForm({
+  wallet,
+  connection,
+  address,
+  outPoint,
+  config,
+}) {
   const router = useRouter();
   const [formState, setFormState] = useState({});
   const [pending, setPending] = useState(false);
@@ -115,6 +121,8 @@ export default function WithdrawForm({ address, outPoint, config }) {
   ) {
     return (
       <SignForm
+        wallet={wallet}
+        connection={connection}
         address={address}
         buildingPacket={formState.buildingPacket}
         ckbChainConfig={config.ckbChainConfig}

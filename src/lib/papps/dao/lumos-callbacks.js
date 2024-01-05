@@ -31,18 +31,18 @@ function buildCellDep(scriptInfo) {
 function addDistinctCellDep(list, ...items) {
   return pushDistinctBy(
     list,
+    items,
     (a, b) =>
       a.outPoint.txHash === b.outPoint.txHash &&
       a.outPoint.index === b.outPoint.index &&
       a.depType === b.depType,
-    items,
   );
 }
 function addDistinctHeaderDep(list, ...items) {
-  return pushDistinctBy(list, (a, b) => a === b, items);
+  return pushDistinctBy(list, items, (a, b) => a === b);
 }
 
-function pushDistinctBy(list, eq, items) {
+function pushDistinctBy(list, items, eq) {
   const newItems = items.filter(
     (newItem) =>
       list.find((existingItem) => eq(existingItem, newItem)) === undefined,
@@ -126,14 +126,15 @@ async function onClaim({ ckbRpcUrl, ckbChainConfig }, txSkeleton, op) {
   const { previousOutput } = op;
   const rpc = new RPC(ckbRpcUrl);
 
-  const txSkeletonMutable = txSkeleton.asMutable();
-
   const cell = await getCellWithoutCache(previousOutput, { ckbRpcUrl });
   const depositBlockNumber = getDepositBlockNumberFromWithdrawCell(cell);
   const depositBlockHash = await rpc.getBlockHash(depositBlockNumber);
   const depositHeader = await rpc.getHeader(depositBlockHash);
   const withdrawHeader = await rpc.getHeader(cell.blockHash);
 
+  const fromAddress = lumosHelpers.encodeToAddress(cell.cellOutput.lock, {
+    config: ckbChainConfig,
+  });
   const to = op.to ?? cell.cellOutput.lock;
 
   // add input
@@ -142,7 +143,15 @@ async function onClaim({ ckbRpcUrl, ckbChainConfig }, txSkeleton, op) {
     dao
       .calculateDaoEarliestSince(depositHeader.epoch, withdrawHeader.epoch)
       .toString(16);
-  txSkeletonMutable.update("inputs", (inputs) => inputs.push(cell));
+  txSkeleton = await commonScripts.setupInputCell(
+    txSkeleton,
+    cell,
+    fromAddress,
+    {
+      config: ckbChainConfig,
+    },
+  );
+  const txSkeletonMutable = txSkeleton.asMutable();
   txSkeletonMutable.update("inputSinces", (inputSinces) =>
     inputSinces.set(txSkeletonMutable.get("inputs").size - 1, since),
   );
@@ -154,8 +163,9 @@ async function onClaim({ ckbRpcUrl, ckbChainConfig }, txSkeleton, op) {
       .calculateMaximumWithdraw(cell, depositHeader.dao, withdrawHeader.dao)
       .toString(16);
   op = { ...op, totalClaimedCapacity: outCapacity };
-  txSkeletonMutable.update("outputs", (outputs) =>
-    outputs.push({
+  txSkeletonMutable.updateIn(
+    ["outputs", txSkeletonMutable.get("outputs").size - 1],
+    () => ({
       cellOutput: {
         capacity: outCapacity,
         type: null,
@@ -167,11 +177,7 @@ async function onClaim({ ckbRpcUrl, ckbChainConfig }, txSkeleton, op) {
 
   // add cell deps
   txSkeletonMutable.update("cellDeps", (cellDeps) =>
-    addDistinctCellDep(
-      cellDeps,
-      buildCellDep(ckbChainConfig.SCRIPTS.DAO),
-      buildCellDep(ckbChainConfig.SCRIPTS.JOYID),
-    ),
+    addDistinctCellDep(cellDeps, buildCellDep(ckbChainConfig.SCRIPTS.DAO)),
   );
   // add header deps
   txSkeletonMutable.update("headerDeps", (headerDeps) =>
@@ -182,8 +188,9 @@ async function onClaim({ ckbRpcUrl, ckbChainConfig }, txSkeleton, op) {
   const depositBlockPos = txSkeletonMutable
     .get("headerDeps")
     .indexOf(depositBlockHash);
-  txSkeletonMutable.update("witnesses", (witnesses) =>
-    witnesses.push(packDaoWitnessArgs(depositBlockPos)),
+  txSkeletonMutable.updateIn(
+    ["witnesses", txSkeletonMutable.get("witnesses").size - 1],
+    () => packDaoWitnessArgs(depositBlockPos),
   );
 
   return [txSkeletonMutable.asImmutable(), op];

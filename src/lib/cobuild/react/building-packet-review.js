@@ -200,14 +200,6 @@ export function TxSection({
   return (
     <dl className="divide-y divide-gray-100">
       <div className="x-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-        <dt className="leading-6 text-gray-900">Dump</dt>
-        <dd className="text-gray-700 sm:col-span-2 sm:mt-0">
-          <pre className="font-mono p-4 bg-slate-800 text-slate-300 rounded overflow-scroll">
-            {JSON.stringify(buildingPacket.value.payload, null, 2)}
-          </pre>
-        </dd>
-      </div>
-      <div className="x-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
         <dt className="leading-6 text-gray-900">Hash</dt>
         <dd className="text-gray-700 sm:col-span-2 sm:mt-0 break-all">
           {txHash}
