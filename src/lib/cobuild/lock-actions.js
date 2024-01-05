@@ -87,8 +87,19 @@ function dispatchLockActions(
           inputIndices,
         },
       },
-      // reset WitnessArgs.lock to null
       () => `0x${"0".repeat(129 * 2)}`,
+    );
+  } else if (script.codeHash === ckbChainConfig.SCRIPTS.UNISAT.CODE_HASH) {
+    return generalLockActions.prepareLockActionWithWitnessStore(
+      buildingPacket,
+      scriptHash,
+      {
+        type: "WitnessArgsStore",
+        value: {
+          inputIndices,
+        },
+      },
+      () => `0x${"0".repeat(65 * 2)}`,
     );
   }
 

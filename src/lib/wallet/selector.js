@@ -17,5 +17,5 @@ export function address(slug, connection, ckbChainConfig) {
 }
 
 export async function sign(slug, connection, message, ckbChainConfig) {
-  return await providers[slug].connect(connection, message, ckbChainConfig);
+  return await providers[slug].sign(connection, message, ckbChainConfig);
 }

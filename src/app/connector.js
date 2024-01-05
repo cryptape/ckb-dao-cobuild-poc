@@ -16,7 +16,7 @@ function getAccountName(connection) {
 
 export function ConnectorView({
   state,
-  processingWalletSlug,
+  processingWallet,
   connect,
   select,
   reset,
@@ -28,16 +28,16 @@ export function ConnectorView({
           {state.error}
         </Alert>
       ) : null}
-      {state.connections.length > 0 && processingWalletSlug !== null ? (
+      {state.connections.length > 0 && processingWallet !== null ? (
         <Modal show dismissible className="not-prose" onClose={reset}>
           <Modal.Header>
-            Choose {walletSelector.walletName(processingWalletSlug)} Account
+            Choose {walletSelector.walletName(processingWallet)} Account
           </Modal.Header>
           <Modal.Body>
             <ListGroup>
               {state.connections.map((c) => (
                 <ListGroup.Item
-                  onClick={() => select(processingWalletSlug, c)}
+                  onClick={() => select(processingWallet, c)}
                   key={getAccountName(c)}
                   className="break-all"
                 >
@@ -49,14 +49,14 @@ export function ConnectorView({
         </Modal>
       ) : null}
       <div className="flex flex-wrap gap-2">
-        {Object.keys(walletSelector.providers).map((walletSlug) => (
+        {Object.keys(walletSelector.providers).map((wallet) => (
           <Button
-            key={walletSlug}
-            onClick={() => connect(walletSlug)}
-            isProcessing={processingWalletSlug === walletSlug}
-            disabled={processingWalletSlug !== null}
+            key={wallet}
+            onClick={() => connect(wallet)}
+            isProcessing={processingWallet === wallet}
+            disabled={processingWallet !== null}
           >
-            {walletSelector.walletName(walletSlug)}
+            {walletSelector.walletName(wallet)}
           </Button>
         ))}
       </div>
@@ -66,23 +66,23 @@ export function ConnectorView({
 
 export default function Connector() {
   const router = useRouter();
-  const [processingWalletSlug, setProcessingWalletSlug] = useState(null);
+  const [processingWallet, setProcessingWallet] = useState(null);
   const [state, setState] = useState({ connections: [], error: null });
 
   const reset = (error = null) => {
     setState({ connections: [], error });
-    setProcessingWalletSlug(null);
+    setProcessingWallet(null);
   };
 
-  const select = (walletSlug, connection) => {
-    router.push(`/u/${walletSlug}/${connection}`);
+  const select = (wallet, connection) => {
+    router.push(`/u/${wallet}/${connection}`);
   };
 
-  const connect = async (walletSlug) => {
-    setProcessingWalletSlug(walletSlug);
+  const connect = async (wallet) => {
+    setProcessingWallet(wallet);
     let connections = [];
     try {
-      connections = await walletSelector.connect(walletSlug);
+      connections = await walletSelector.connect(wallet);
     } catch (err) {
       console.error(err.stack);
       reset(err.toString());
@@ -90,7 +90,7 @@ export default function Connector() {
     }
 
     if (connections.length === 1) {
-      return select(walletSlug, connections[0]);
+      return select(wallet, connections[0]);
     }
 
     setState({
@@ -99,6 +99,6 @@ export default function Connector() {
     });
   };
 
-  const childProps = { state, processingWalletSlug, connect, select, reset };
+  const childProps = { state, processingWallet, connect, select, reset };
   return <ConnectorView {...childProps} />;
 }

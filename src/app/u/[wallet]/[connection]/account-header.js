@@ -3,11 +3,11 @@ import SignOut from "./sign-out";
 
 export default function AccountHeader({
   address,
-  walletSlug,
+  wallet,
   connection,
   config: { ckbChain },
 }) {
-  const walletName = walletSelector.walletName(walletSlug);
+  const walletName = walletSelector.walletName(wallet);
 
   return (
     <header>

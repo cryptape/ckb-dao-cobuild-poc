@@ -61,7 +61,7 @@ export function TransactionForm({ formAction, formState, address }) {
   );
 }
 
-export default function TransferForm({ address, config }) {
+export default function TransferForm({ wallet, connection, address, config }) {
   const router = useRouter();
   const [formState, formAction] = useFormState(transfer, {});
   const [signedBuildingPacket, setSignedBuildingPacket] = useState(null);
@@ -78,6 +78,8 @@ export default function TransferForm({ address, config }) {
   ) {
     return (
       <SignForm
+        wallet={wallet}
+        connection={connection}
         address={address}
         buildingPacket={formState.buildingPacket}
         ckbChainConfig={config.ckbChainConfig}

@@ -14,7 +14,12 @@ export default function Transfer({ params: { wallet, connection }, config }) {
   return (
     <main>
       <h2>Transfer</h2>
-      <TransferForm address={address} config={config} />
+      <TransferForm
+        wallet={wallet}
+        connection={connection}
+        address={address}
+        config={config}
+      />
     </main>
   );
 }

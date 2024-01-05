@@ -16,7 +16,7 @@ export default function Account({ params: { wallet, connection }, config }) {
     <>
       <header>
         <AccountHeader
-          walletSlug={wallet}
+          wallet={wallet}
           connection={connection}
           address={address}
           config={config}
@@ -24,7 +24,7 @@ export default function Account({ params: { wallet, connection }, config }) {
       </header>
       <main>
         <Suspense fallback={<AssetsFallback />}>
-          <Assets address={address} />
+          <Assets wallet={wallet} connection={connection} address={address} />
         </Suspense>
       </main>
     </>

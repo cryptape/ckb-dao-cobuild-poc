@@ -1,7 +1,8 @@
 import * as joyid from "@joyid/ckb";
 import { bytes } from "@ckb-lumos/codec";
 import * as lumosHelpers from "@ckb-lumos/helpers";
-import base64 from "base64-js";
+
+import { urlSafeBase64Decode } from "@/lib/base64";
 
 export const title = "Joyid";
 
@@ -29,20 +30,12 @@ export function address(connection, ckbChainConfig) {
 
 // Calls this function only when wallet is connected.
 export async function sign(connection, message) {
-  const resp = await joyid.signChallenge(message, connection);
+  const resp = await joyid.signChallenge(message.slice(2), connection);
 
   const seal = ["0x01", resp.pubkey];
   seal.push(bytes.hexify(signatureFromDer(resp.signature)).substring(2));
   seal.push(bytes.hexify(urlSafeBase64Decode(resp.message)).substring(2));
   return seal.join("");
-}
-
-function urlSafeBase64Decode(str) {
-  const remainder = str.length % 4;
-  if (remainder !== 0) {
-    str = str + "=".repeat(4 - remainder);
-  }
-  return base64.toByteArray(str);
 }
 
 export function signatureFromDer(hexString) {
