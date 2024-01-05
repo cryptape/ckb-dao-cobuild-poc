@@ -30,18 +30,7 @@ function deploy() {
   ckb-cli deploy gen-txs --from-address ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqwgx292hnvmn68xf779vmzrshpmm6epn4c0cgwga \
     --fee-rate 1000 --deployment-config "$CONFIG_FILE" --info-file "$INFO_FILE" --migration-dir "$MIGRATION_DIR"
 
-  SIGNATURES="$(ckb-cli deploy sign-txs --info-file "$INFO_FILE" --privkey-path specs/miner.key --output-format json | sed -n 's/: \("[^"]*"\)/: [\1]/p')"
-  echo "$SIGNATURES"
-  CELLS_SIGNATURES="$(echo "$SIGNATURES" | head -1)"
-  DEP_GROUPS_SIGNATURES="$(echo "$SIGNATURES" | tail -1)"
-
-  sed -i.bak \
-    -e 's/"cell_tx_signatures": {}/"cell_tx_signatures": {'"$CELLS_SIGNATURES"'}/' \
-    "$INFO_FILE"
-  sed -i.bak \
-    -e 's/"dep_group_tx_signatures": {}/"dep_group_tx_signatures": {'"$DEP_GROUPS_SIGNATURES"'}/' \
-    "$INFO_FILE"
-  rm -f "${INFO_FILE}.bak"
+  ckb-cli deploy sign-txs --add-signatures --info-file "$INFO_FILE" --privkey-path specs/miner.key --output-format json | sed -n 's/: \("[^"]*"\)/: [\1]/p'
 
   ckb-cli deploy apply-txs --info-file "$INFO_FILE" --migration-dir "$MIGRATION_DIR"
 }
