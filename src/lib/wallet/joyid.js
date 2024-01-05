@@ -2,7 +2,7 @@ import * as joyid from "@joyid/ckb";
 import { bytes } from "@ckb-lumos/codec";
 import * as lumosHelpers from "@ckb-lumos/helpers";
 
-import { urlSafeBase64Decode } from "@/lib/base64";
+import { urlSafeBase64Decode } from "../base64";
 
 export const title = "Joyid";
 

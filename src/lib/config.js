@@ -124,3 +124,11 @@ export const useConfig = (() => {
     return config;
   };
 })();
+
+export function useTestnetConfig() {
+  return {
+    ckbChain: DEFAULT_CKB_RPC_URL,
+    ckbRpcUrl: DEFAULT_CKB_CHAIN,
+    ckbChainConfig: CKB_CHAINS_CONFIGS[DEFAULT_CKB_CHAIN],
+  };
+}
