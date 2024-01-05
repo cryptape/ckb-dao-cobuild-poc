@@ -1,4 +1,5 @@
 import * as walletSelector from "@/lib/wallet/selector";
+import SignOut from "./sign-out";
 
 export default function AccountHeader({
   address,
@@ -10,14 +11,14 @@ export default function AccountHeader({
 
   return (
     <header>
+      <SignOut
+        walletName={walletName}
+        connection={connection !== address ? connection : null}
+      />
+
       <p className="break-all">
         <strong>CKB Address:</strong> {address}
       </p>
-      {address !== connection ? (
-        <p className="break-all">
-          <strong>{walletName} Address:</strong> {connection}
-        </p>
-      ) : null}
       {ckbChain === "AGGRON4" ? (
         <p>
           Claim CKB From{" "}
