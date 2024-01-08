@@ -1,4 +1,7 @@
-# CKB DAO Cobuild POC
+# CKB DAO Cobuild PoC
+
+- [Contributing Guidelines](docs/CONTRIBUTING.md)
+- [Guidelines for PoC Reviewers](docs/poc-review-guide.md)
 
 ## Disclaimer
 
