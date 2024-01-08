@@ -28,19 +28,21 @@ The general workflow to build transactions in Cobuild:
 
 The core is the step 2. There will be a framework to handle 1, 3, 4, 5, I just build a minimal framework to make the PoC work.
 
-1. `src/lib/cobuild/types.js`: Cobuild data structures definition.
-2. `src/lib/papps/dao`: DAO papp
+This guide is based on the version [v0.0.1](https://github.com/cryptape/ckb-dao-cobuild-poc/tree/v0.0.1).
+
+1. [`src/lib/cobuild/types.js`](../src/lib/cobuild/types.js): Cobuild data structures definition.
+2. [`src/lib/papps/dao`](../src/lib/papps/dao): DAO papp
     - a.
-        - `src/lib/papps/dao/schema.js`: Action.data schema
-        - `src/lib/papps/dao/action-creators.js`: Functions to create Action.data for DAO.
-    - b. `src/lib/papps/dao/lumos-callbacks.js`: Build transactions based on DAO message actions.
-3. `src/lib/cobuild/fee-manager.js`: See the function `payFee` and `storeWitnessForFeeEstimation`
-4. `src/lib/cobuild/lock-actions.js`: See the function `prepareLockActions`.
-    - a/b. `src/lib/cobuild/general-lock-actions.js`: See the function `prepareLockActionWithWitnessStore`
-    - c. `src/lib/wallet/selector.js` acts as a gateway to connect different wallets and create signatures.
-    - c. `src/lib/cobuild/general-lock-actions.js`: See the function `applyLockAction`
-5. `src/app/u/[wallet]/[connection]/submit-building-packet.js`: a simple UI to send tx and query its status.
+        - [`src/lib/papps/dao/schema.js`](../src/lib/papps/dao/schema.js): Action.data schema
+        - [`src/lib/papps/dao/action-creators.js`](../src/lib/papps/dao/action-creators.js): Functions to create Action.data for DAO.
+    - b. [`src/lib/papps/dao/lumos-callbacks.js`](../src/lib/papps/dao/lumos-callbacks.js): Build transactions based on DAO message actions.
+3. [`src/lib/cobuild/fee-manager.js`](../src/lib/cobuild/fee-manager.js): See the function [`payFee`](https://github.com/cryptape/ckb-dao-cobuild-poc/blob/v0.0.1/src/lib/cobuild/fee-manager.js#L9) and [`storeWitnessForFeeEstimation`](https://github.com/cryptape/ckb-dao-cobuild-poc/blob/c7aaacbcf4a2a9c90674e7d732b58b800cb94fe4/src/lib/cobuild/fee-manager.js#L46)
+4. [`src/lib/cobuild/lock-actions.js`](../src/lib/cobuild/lock-actions.js): See the function [`prepareLockActions`](https://github.com/cryptape/ckb-dao-cobuild-poc/blob/c7aaacbcf4a2a9c90674e7d732b58b800cb94fe4/src/lib/cobuild/lock-actions.js#L12).
+    - a/b. [`src/lib/cobuild/general-lock-actions.js`](../src/lib/cobuild/general-lock-actions.js): See the function [`prepareLockActionWithWitnessStore`](https://github.com/cryptape/ckb-dao-cobuild-poc/blob/c7aaacbcf4a2a9c90674e7d732b58b800cb94fe4/src/lib/cobuild/general-lock-actions.js#L25)
+    - c. [`src/lib/wallet/selector.js`](../src/lib/wallet/selector.js) acts as a gateway to connect different wallets and create signatures.
+    - c. [`src/lib/cobuild/general-lock-actions.js`](../src/lib/cobuild/general-lock-actions.js): See the function [`applyLockAction`](https://github.com/cryptape/ckb-dao-cobuild-poc/blob/c7aaacbcf4a2a9c90674e7d732b58b800cb94fe4/src/lib/cobuild/general-lock-actions.js#L84)
+5. [`src/app/u/[wallet]/[connection]/submit-building-packet.js`](../src/app/u/%5Bwallet%5D/%5Bconnection%5D/submit-building-packet.js): a simple UI to send tx and query its status.
 
 Remarks:
 
-- `src/lib/cobuild/react/building-packet-review.js`: UI to review the building packet for signing.
+- [`src/lib/cobuild/react/building-packet-review.js`](https://github.com/cryptape/ckb-dao-cobuild-poc/blob/v0.0.1/src/lib/cobuild/react/building-packet-review.js): UI to review the building packet for signing.
