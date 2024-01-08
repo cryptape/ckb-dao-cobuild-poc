@@ -311,7 +311,7 @@ export const GeneralLockAction = table(
 
 export const GeneralLockScriptInfo = {
   name: bytes.bytifyRawString("GeneralLock"),
-  url: bytes.bytifyRawString("https://github.com/doitian/ckb-dao-cobuild-poc"),
+  url: bytes.bytifyRawString("https://github.com/crytpape/ckb-dao-cobuild-poc"),
   scriptHash: null,
   schema: bytes.bytifyRawString(GENERAL_LOCK_SCHEMA),
   messageType: bytes.bytifyRawString("GeneralLockAction"),
