@@ -5,6 +5,7 @@ CKB_RPC_URL="${CKB_RPC_URL:-http://127.0.0.1:8114}"
 function generate() {
   local n="$(printf '%x' "${1:-1}")"
   curl --request POST \
+    -H "Content-Type: application/json" \
     --url http://127.0.0.1:8114/ \
     --data '{
   "id": 42,
