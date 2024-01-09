@@ -199,6 +199,16 @@ export function TxSection({
 
   return (
     <dl className="divide-y divide-gray-100">
+      {process.env.DEBUG !== undefined ? (
+        <div className="x-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+          <dt className="leading-6 text-gray-900">Hash</dt>
+          <dd className="text-gray-700 sm:col-span-2 sm:mt-0 break-all">
+            <pre className="font-mono p-4 bg-slate-800 text-slate-300 rounded overflow-scroll">
+              {JSON.stringify(buildingPacket, null, 2)}
+            </pre>
+          </dd>
+        </div>
+      ) : null}
       <div className="x-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
         <dt className="leading-6 text-gray-900">Hash</dt>
         <dd className="text-gray-700 sm:col-span-2 sm:mt-0 break-all">

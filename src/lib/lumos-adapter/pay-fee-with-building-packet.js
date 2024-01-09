@@ -3,10 +3,6 @@ import { common as commonScripts } from "@ckb-lumos/common-scripts";
 import createBuildingPacketFromSkeleton from "./create-building-packet-from-skeleton";
 import createSkeletonFromBuildingPacket from "./create-skeleton-from-building-packet";
 
-function outPointEqual(a, b) {
-  return a.txHash === b.txHash && a.index === b.index;
-}
-
 // feePayments: [{address, fee?, feeRate?}]
 export default async function payFeeWithBuildingPacket(
   buildingPacket,

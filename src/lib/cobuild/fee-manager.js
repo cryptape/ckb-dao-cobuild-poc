@@ -59,12 +59,15 @@ function storeWitnessForFeeEstimation(
       // Variable length, but 500 is usually enough.
       () => bytes.hexify(new Uint8Array(500)),
     );
-  } else if (script.codeHash === ckbChainConfig.SCRIPTS.UNISAT.CODE_HASH) {
+  } else if (
+    script.codeHash === ckbChainConfig.SCRIPTS.OMNILOCK_CUSTOM.CODE_HASH
+  ) {
     return generalLockActions.storeWitnessForFeeEstimation(
       buildingPacket,
       scriptHash,
       inputIndices,
-      () => `0x${"0".repeat(65 * 2)}`,
+      // 85 = 65 signature in OmnilockWitnessLock
+      () => `0x${"0".repeat(85 * 2)}`,
     );
   }
 

@@ -1,9 +1,8 @@
+import { bytes } from "@ckb-lumos/codec";
+import * as lumosHelpers from "@ckb-lumos/helpers";
 import { bech32 } from "bech32";
 import * as bs58 from "bs58";
-import * as lumosHelpers from "@ckb-lumos/helpers";
-import { bytes } from "@ckb-lumos/codec";
-
-import { urlSafeBase64Decode } from "@/lib/base64";
+import { packOmnilockWitnessLock } from "./omni-lock";
 
 export function isNativeSegwit(btcAddress) {
   return btcAddress.startsWith("bc1q") || btcAddress.startsWith("tb1q");
@@ -48,6 +47,7 @@ export function btcAddressToCkbAddress(btcAddress, scriptInfo, ckbChainConfig) {
       "Please choose an address type that is NOT Taproot (P2TR).",
     );
   }
+  args += "00";
 
   const script = {
     codeHash: scriptInfo.CODE_HASH,
@@ -72,5 +72,5 @@ export function didSign(btcAddress, signature) {
     );
   }
 
-  return bytes.hexify(signature);
+  return bytes.hexify(packOmnilockWitnessLock(signature));
 }

@@ -5,6 +5,7 @@ import * as lumosHelpers from "@ckb-lumos/helpers";
 import { urlSafeBase64Decode } from "../base64";
 
 export const title = "Joyid";
+export const lockScriptName = "Joyid Lock";
 
 // Connects to the wallet.
 export async function connect() {
