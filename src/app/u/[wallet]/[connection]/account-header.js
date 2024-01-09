@@ -1,19 +1,18 @@
-import * as walletSelector from "@/lib/wallet/selector";
 import SignOut from "./sign-out";
 
 export default function AccountHeader({
   address,
   wallet,
   connection,
-  config: { ckbChain },
+  config: { ckbChain, ckbChainConfig },
 }) {
-  const walletName = walletSelector.walletName(wallet);
-
   return (
     <header>
       <SignOut
-        walletName={walletName}
+        wallet={wallet}
         connection={connection !== address ? connection : null}
+        address={address}
+        ckbChainConfig={ckbChainConfig}
       />
 
       <p className="break-all">
