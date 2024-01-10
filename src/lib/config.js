@@ -6,6 +6,7 @@ const CKB_CHAINS_CONFIGS = {
     EXPLORER_URL: "https://pudge.explorer.nervos.org",
     SCRIPTS: {
       ...predefined.AGGRON4.SCRIPTS,
+
       JOYID: {
         CODE_HASH:
           "0xd23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac",
@@ -15,18 +16,14 @@ const CKB_CHAINS_CONFIGS = {
         INDEX: "0x0",
         DEP_TYPE: "depGroup",
       },
-      AUTH: {
-        TX_HASH:
-          "0xd4f72f0504373ff8effadf44f92c46a0062774fb585ebcacc24eb47b98e2d66a",
-        INDEX: "0x0",
-        DEP_TYPE: "code",
-      },
-      UNISAT: {
+      // Disable OMNILOCK bundled in lumos
+      OMNILOCK: undefined,
+      OMNILOCK_CUSTOM: {
         CODE_HASH:
-          "0xd7aac16927b2d572b3803c1f68e49d082d3acc2af2614c9be752ff9cec5dc3ea",
-        HASH_TYPE: "data1",
+          "0xf329effd1c475a2978453c8600e1eaf0bc2087ee093c3ee64cc96ec6847752cb",
+        HASH_TYPE: "type",
         TX_HASH:
-          "0xe842b43df31c92d448fa345d60a6df3e03aaab19ef88921654bf95c673a26872",
+          "0xff234bf2fb0ad2ab5b356ceda317d3dee3efb2c55b9427ef55d9dcbf6eecbf9f",
         INDEX: "0x0",
         DEP_TYPE: "code",
       },
@@ -62,13 +59,11 @@ function buildCkbChainConfig(ckbChain) {
       TX_HASH: presence(process.env.NEXT_PUBLIC_JOYID_TX_HASH),
     },
   );
-  const UNISAT = assign(
-    { ...template.SCRIPTS.JOYID },
+  const OMNILOCK_CUSTOM = assign(
+    { ...template.SCRIPTS.OMNILOCK_CUSTOM },
     {
-      CODE_HASH: presence(process.env.NEXT_PUBLIC_UNISAT_CODE_HASH),
-      HASH_TYPE: "type",
-      TX_HASH: presence(process.env.NEXT_PUBLIC_AUTH_TX_HASH),
-      DEP_TYPE: "depGroup",
+      CODE_HASH: presence(process.env.NEXT_PUBLIC_OMNILOCK_CODE_HASH),
+      TX_HASH: presence(process.env.NEXT_PUBLIC_OMNILOCK_TX_HASH),
     },
   );
 
@@ -84,8 +79,7 @@ function buildCkbChainConfig(ckbChain) {
     EXPLORER_URL: null,
     SCRIPTS: {
       JOYID,
-      UNISAT,
-      AUTH: template.SCRIPTS.AUTH,
+      OMNILOCK_CUSTOM,
       DAO: {
         ...template.SCRIPTS.DAO,
         TX_HASH: tx0,

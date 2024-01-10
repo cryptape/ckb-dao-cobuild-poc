@@ -8,16 +8,13 @@ export function buildJoyidLockInfo(ckbChainConfig) {
   return buildLockInfo(ckbChainConfig, ckbChainConfig.SCRIPTS.JOYID, []);
 }
 
-export function buildUniSatLockInfo(ckbChainConfig) {
-  const UNISAT = ckbChainConfig.SCRIPTS.UNISAT;
-  // Require the secp256k1 data cell
-  const extraScripts = [ckbChainConfig.SCRIPTS.SECP256K1_BLAKE160];
-  // if not depGroup, add AUTH as well
-  if (UNISAT.DEP_TYPE === "code") {
-    extraScripts.push(ckbChainConfig.SCRIPTS.AUTH);
-  }
-
-  return buildLockInfo(ckbChainConfig, UNISAT, extraScripts);
+export function buildOmniLockInfo(ckbChainConfig) {
+  return buildLockInfo(
+    ckbChainConfig,
+    ckbChainConfig.SCRIPTS.OMNILOCK_CUSTOM,
+    // Require the secp256k1 data cell
+    [ckbChainConfig.SCRIPTS.SECP256K1_BLAKE160],
+  );
 }
 
 export function buildLockInfo(ckbChainConfig, scriptInfo, extraScripts) {
@@ -137,7 +134,7 @@ export default function initLumosCommonScripts(ckbChainConfig) {
   if (!inited) {
     commonScripts.registerCustomLockScriptInfos([
       buildJoyidLockInfo(ckbChainConfig),
-      buildUniSatLockInfo(ckbChainConfig),
+      buildOmniLockInfo(ckbChainConfig),
     ]);
     inited = true;
   }

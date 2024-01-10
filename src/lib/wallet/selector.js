@@ -7,6 +7,10 @@ export function walletName(slug) {
   return providers[slug].title;
 }
 
+export function lockScriptName(slug) {
+  return providers[slug].lockScriptName;
+}
+
 export async function connect(slug) {
   return await providers[slug].connect();
 }

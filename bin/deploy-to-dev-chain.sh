@@ -40,7 +40,7 @@ bin/generate-blocks.sh 4
 sleep 1
 
 # try twice in case the indexer has not updated yet
-deploy ckb_auth || deploy ckb_auth
+deploy omnilock || deploy omnilock
 bin/generate-blocks.sh 4
 
 bin/use-env.sh >.env

@@ -3,6 +3,7 @@ import { urlSafeBase64Decode } from "@/lib/base64";
 import { didConnected, didSign, btcAddressToCkbAddress } from "./btc-wallet";
 
 export const title = "UniSat";
+export const lockScriptName = "Omnilock";
 
 // Connects to the wallet.
 export async function connect() {
@@ -18,7 +19,7 @@ export async function connect() {
 //
 // Calls this function only when wallet is connected.
 export function address(btcAddress, ckbChainConfig) {
-  const scriptInfo = ckbChainConfig.SCRIPTS.UNISAT;
+  const scriptInfo = ckbChainConfig.SCRIPTS.OMNILOCK_CUSTOM;
   return btcAddressToCkbAddress(btcAddress, scriptInfo, ckbChainConfig);
 }
 
