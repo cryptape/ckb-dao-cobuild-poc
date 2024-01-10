@@ -12,7 +12,7 @@ We love your input! We want to make contributing to this project as easy and tra
 
 We use github to host code, to track issues and feature requests, as well as accept pull requests.
 
-## Pull Requests and [Changesets](https://github.com/changesets/changesets)
+## Pull Requests
 
 Pull requests are the best way to propose changes to the codebase. We actively welcome your pull requests:
 
