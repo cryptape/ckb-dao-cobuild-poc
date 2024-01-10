@@ -1,7 +1,8 @@
 import * as joyid from "./joyid";
 import * as unisat from "./unisat";
+import * as okx from "./okx";
 
-export const providers = { joyid, unisat };
+export const providers = { joyid, unisat, okx };
 
 export function walletName(slug) {
   return providers[slug].title;

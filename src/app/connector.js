@@ -85,7 +85,7 @@ export default function Connector() {
       connections = await walletSelector.connect(wallet);
     } catch (err) {
       console.error(err.stack);
-      reset(err.toString());
+      reset(err.message ?? err.toString());
       return;
     }
 
