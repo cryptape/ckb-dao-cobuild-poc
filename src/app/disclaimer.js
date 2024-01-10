@@ -10,7 +10,6 @@ export default function Disclaimer({ config: { ckbChain } }) {
           the use of a new transaction building protocol named{" "}
           <strong>Cobuild</strong>.
         </li>
-        <li>In this demo, JoyID is used to sign transactions.</li>
         <li>This demo runs in the CKB chain {ckbChain}.</li>
       </ul>
     </Alert>
