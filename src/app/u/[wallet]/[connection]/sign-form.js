@@ -44,7 +44,7 @@ export default function SignForm({
       );
     } catch (err) {
       console.error(err.stack);
-      setError(err.toString());
+      setError(err.message ?? err.toString());
     }
   };
 

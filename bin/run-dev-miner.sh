@@ -6,6 +6,7 @@ set -u
 
 function has_tx() {
   curl --request POST \
+    -H "Content-Type: application/json" \
     --silent \
     --url http://127.0.0.1:8114/ \
     --data '{

@@ -24,7 +24,7 @@ case "${1:-}" in
 esac
 
 JOYID_INFO_FILE="$(ls migrations/joyid/*.json | grep -v deployment | head -n 1)"
-CKB_AUTH_INFO_FILE="$(ls migrations/ckb_auth/*.json | grep -v deployment | head -n 1)"
+OMNILOCK_INFO_FILE="$(ls migrations/omnilock/*.json | grep -v deployment | head -n 1)"
 
 sed -n \
   -e 's/,$//' \
@@ -38,10 +38,10 @@ sed -n \
 
 sed -n \
   -e 's/,$//' \
-  -e 's/^ *"type_id": "/NEXT_PUBLIC_UNISAT_CODE_HASH="/p' \
-  "$CKB_AUTH_INFO_FILE" | head -1
+  -e 's/^ *"type_id": "/NEXT_PUBLIC_OMNILOCK_CODE_HASH="/p' \
+  "$OMNILOCK_INFO_FILE" | head -1
 
 sed -n \
   -e 's/,$//' \
-  -e 's/^ *"tx_hash": /NEXT_PUBLIC_AUTH_TX_HASH=/p' \
-  "$CKB_AUTH_INFO_FILE" | tail -1
+  -e 's/^ *"tx_hash": /NEXT_PUBLIC_OMNILOCK_TX_HASH=/p' \
+  "$OMNILOCK_INFO_FILE" | tail -1

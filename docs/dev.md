@@ -56,7 +56,7 @@ Connect a wallet and copy the CKB address displayed at the top of the page.
 Transfer some CKB tokens from the miner account to the copied address. Replace `ckbt1qz...` with the real address in the following command.
 
 ```bash
-ckb-cli wallet transfer --skip-check-to-address --to-address ckt1qz... --capacity 300000 --privkey-path specs/miner.key
+bin/dev-faucet.sh ckt1qz...
 ```
 
 Mine some blocks to commit the transfer transaction.

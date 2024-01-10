@@ -2,7 +2,7 @@
 .env.*
 /migrations/dev
 /migrations/joyid
-/migrations/ckb_auth
+/migrations/omnilock
 
 # CKB
 /ckb-miner.toml

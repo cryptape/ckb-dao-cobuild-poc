@@ -1,6 +1,6 @@
 name: "✨ Feature"
 description: Request a feature
-title: "[Feature] <title>"
+title: ":sparkles: <title>"
 labels: ["feature", "triage"]
 # projects: []
 # assignees: []

@@ -89,7 +89,9 @@ function dispatchLockActions(
       },
       () => `0x${"0".repeat(129 * 2)}`,
     );
-  } else if (script.codeHash === ckbChainConfig.SCRIPTS.UNISAT.CODE_HASH) {
+  } else if (
+    script.codeHash === ckbChainConfig.SCRIPTS.OMNILOCK_CUSTOM.CODE_HASH
+  ) {
     return generalLockActions.prepareLockActionWithWitnessStore(
       buildingPacket,
       scriptHash,
@@ -99,7 +101,8 @@ function dispatchLockActions(
           inputIndices,
         },
       },
-      () => `0x${"0".repeat(65 * 2)}`,
+      // 85 = 65 signature in OmnilockWitnessLock
+      () => `0x${"0".repeat(85 * 2)}`,
     );
   }
 

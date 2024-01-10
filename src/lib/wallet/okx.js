@@ -2,16 +2,17 @@ import { urlSafeBase64Decode } from "@/lib/base64";
 
 import { didConnected, didSign, btcAddressToCkbAddress } from "./btc-wallet";
 
-export const title = "UniSat (BTC)";
+export const title = "OKX (BTC)";
 export const lockScriptName = "Omnilock";
 
 // Connects to the wallet.
 export async function connect() {
-  if (window.unisat !== null && window.unisat !== undefined) {
-    const btcAddresses = await unisat.requestAccounts();
+  if (window.okxwallet !== null && window.okxwallet !== undefined) {
+    const resp = await okxwallet.bitcoin.connect();
+    const btcAddresses = [resp.address];
     return didConnected(btcAddresses);
   } else {
-    throw new Error("Please install UniSat first!");
+    throw new Error("Please install OKX Wallet first!");
   }
 }
 
@@ -25,7 +26,7 @@ export function address(btcAddress, ckbChainConfig) {
 
 export async function sign(btcAddress, message) {
   const signature = urlSafeBase64Decode(
-    await unisat.signMessage(message.slice(2)),
+    await okxwallet.bitcoin.signMessage(message.slice(2), { from: btcAddress }),
   );
   return didSign(btcAddress, signature);
 }
