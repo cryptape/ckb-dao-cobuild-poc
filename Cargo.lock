@@ -175,6 +175,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "ckb-dao-cobuild-schemas"
+version = "0.1.0"
+dependencies = [
+ "molecule",
+]
+
+[[package]]
 name = "ckb-dao-utils"
 version = "0.111.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
