@@ -32,5 +32,16 @@ jobs:
         run: |
           rustup target add riscv64imac-unknown-none-elf
 
+      - name: Schemas Is Up to Date
+        run: |
+          cargo install moleculec --locked
+          make clean-schemas schemas
+          git diff --exit-code .
+
       - name: Build & Test
         run: make contract
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: contracts
+          path: build/release/
