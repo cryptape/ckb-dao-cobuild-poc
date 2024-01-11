@@ -1,0 +1,36 @@
+name: cargo
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    types: [opened, synchronize]
+
+env:
+  RUST_LOG: debug
+  RUST_BACKTRACE: "1"
+  CARGO_TERM_COLOR: always
+
+jobs:
+  cargo:
+    name: cargo
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Set up Clang
+        uses: egor-tensin/setup-clang@v1
+        with:
+          version: 17
+
+      - name: Setup up Rust
+        run: |
+          rustup target add riscv64imac-unknown-none-elf
+
+      - name: Build & Test
+        run: make -f contracts.mk

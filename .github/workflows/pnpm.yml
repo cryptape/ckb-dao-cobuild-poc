@@ -1,13 +1,14 @@
-name: CI
+name: pnpm
 
 on:
   push:
+    branches: [main, develop]
   pull_request:
     types: [opened, synchronize]
 
 jobs:
-  build:
-    name: Build and Test
+  pnpm:
+    name: pnpm
     timeout-minutes: 15
     runs-on: ubuntu-latest
 
