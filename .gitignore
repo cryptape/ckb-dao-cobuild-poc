@@ -4,6 +4,10 @@
 /migrations/joyid
 /migrations/omnilock
 
+# Contract
+/target
+/contracts/__tests__/failed_txs
+
 # CKB
 /ckb-miner.toml
 /ckb.toml
