@@ -16,7 +16,9 @@ function download() {
   else
     ckb-cli --url "$CKB_URL" rpc get_live_cell --tx-hash "$tx_hash" --index "$index" --with-data |
       sed -n 's/^ *content: 0x//p' |
-      xxd -r -ps >"$file_path"
+      xxd -r -ps >"$file_path.tmp"
+    # avoid partial downloaded files
+    mv "$file_path.tmp" "$file_path"
     echo "$file_name downloaded"
   fi
 }
@@ -30,4 +32,4 @@ download joyid_dep3 0x95ecf9b41701b45d431657a67bbfa3f07ef7ceb53bf87097f3674e1a4a
 # download joyid_dep4 0x8f8c79eb6671709633fe6a46de93c0fedc9c1b8a6527a18d3983879542635c9f 3
 download joyid_dep5 0x8b3255491f3c4dcc1cfca33d5c6bcaec5409efe4bbda243900f9580c47e0242e 1
 
-download omnilock 0xff234bf2fb0ad2ab5b356ceda317d3dee3efb2c55b9427ef55d9dcbf6eecbf9f 0
+download omnilock 0xb50ef6f2e9138f4dbca7d5280e10d29c1a65e60e8a574c009a2fa4e4107e0750 0
