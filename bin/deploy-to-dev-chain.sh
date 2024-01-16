@@ -6,7 +6,7 @@ set -u
 
 if ! [ -f build/release/joyid ]; then
   echo "Expect the contract files in build/release" >&2
-  echo "Run bin/download-joyid-cells.sh to download them from the testnet" >&2
+  echo "Run bin/download-contracts.sh to download them from the testnet" >&2
   exit 1
 fi
 

@@ -1,6 +1,10 @@
 import { urlSafeBase64Decode } from "@/lib/base64";
-
-import { didConnected, didSign, btcAddressToCkbAddress } from "./btc-wallet";
+import {
+  btcAddressToCkbAddress,
+  didConnected,
+  didSign,
+  prepareMessage,
+} from "./btc-wallet";
 
 export const title = "OKX (BTC)";
 export const lockScriptName = "Omnilock";
@@ -26,7 +30,9 @@ export function address(btcAddress, ckbChainConfig) {
 
 export async function sign(btcAddress, message) {
   const signature = urlSafeBase64Decode(
-    await okxwallet.bitcoin.signMessage(message.slice(2), { from: btcAddress }),
+    await okxwallet.bitcoin.signMessage(prepareMessage(message), {
+      from: btcAddress,
+    }),
   );
   return didSign(btcAddress, signature);
 }

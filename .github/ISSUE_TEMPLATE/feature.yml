@@ -1,8 +1,8 @@
 name: "✨ Feature"
 description: Request a feature
 title: ":sparkles: <title>"
-labels: ["feature", "triage"]
-# projects: []
+labels: ["enhancement"]
+projects: ["cryptape/46"]
 # assignees: []
 body:
   - type: markdown

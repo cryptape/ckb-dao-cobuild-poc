@@ -1,6 +1,11 @@
 import { urlSafeBase64Decode } from "@/lib/base64";
 
-import { didConnected, didSign, btcAddressToCkbAddress } from "./btc-wallet";
+import {
+  prepareMessage,
+  didConnected,
+  didSign,
+  btcAddressToCkbAddress,
+} from "./btc-wallet";
 
 export const title = "UniSat (BTC)";
 export const lockScriptName = "Omnilock";
@@ -25,7 +30,7 @@ export function address(btcAddress, ckbChainConfig) {
 
 export async function sign(btcAddress, message) {
   const signature = urlSafeBase64Decode(
-    await unisat.signMessage(message.slice(2)),
+    await unisat.signMessage(prepareMessage(message)),
   );
   return didSign(btcAddress, signature);
 }

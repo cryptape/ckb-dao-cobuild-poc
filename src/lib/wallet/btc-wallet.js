@@ -59,6 +59,12 @@ export function btcAddressToCkbAddress(btcAddress, scriptInfo, ckbChainConfig) {
   });
 }
 
+export const BTC_MESSAGE_PREFIX = "CKB (Bitcoin Layer-2) transaction: ";
+
+export function prepareMessage(message) {
+  return BTC_MESSAGE_PREFIX + message;
+}
+
 export function didSign(btcAddress, signature) {
   if (isNativeSegwit(btcAddress)) {
     signature[0] = 39 + ((signature[0] - 27) % 4);
