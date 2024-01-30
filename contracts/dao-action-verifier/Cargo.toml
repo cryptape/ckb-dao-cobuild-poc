@@ -9,3 +9,4 @@ ckb-std = { version = "0.14.3", default-features = false, features = [
   "ckb-types",
   "allocator",
 ] }
+ckb-transaction-cobuild = { git = "https://github.com/cryptape/ckb-transaction-cobuild-poc.git" }

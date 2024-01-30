@@ -463,6 +463,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ckb-transaction-cobuild"
+version = "0.1.0"
+source = "git+https://github.com/cryptape/ckb-transaction-cobuild-poc.git#d3755e1c89db82823a780268a3d46b7c4bec342c"
+dependencies = [
+ "blake2b-ref",
+ "ckb-gen-types",
+ "ckb-std",
+ "molecule",
+]
+
+[[package]]
 name = "ckb-types"
 version = "0.111.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -598,6 +609,7 @@ name = "dao-action-verifier"
 version = "0.1.0"
 dependencies = [
  "ckb-std",
+ "ckb-transaction-cobuild",
 ]
 
 [[package]]
