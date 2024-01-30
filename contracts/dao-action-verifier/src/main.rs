@@ -11,8 +11,19 @@ ckb_std::entry!(program_entry);
 #[cfg(all(target_arch = "riscv64", not(test)))]
 default_alloc!();
 
-pub fn program_entry() -> i8 {
-    ckb_std::debug!("This is a sample contract!");
+use ckb_std::error::SysError;
+mod error;
+mod error_code;
 
-    0
+use error::Error;
+
+pub fn program_entry() -> i8 {
+    match verify() {
+        Ok(_) => 0,
+        Err(err) => err.into(),
+    }
+}
+
+pub fn verify() -> Result<(), Error> {
+    Err(trace_error!(SysError::IndexOutOfBound, "error"))
 }
