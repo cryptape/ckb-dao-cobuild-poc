@@ -1,5 +1,6 @@
 use ckb_dao_cobuild_schemas::{
-    Capacity, Claim, ClaimVec, DaoActionData, Deposit, DepositVec, Withdraw, WithdrawVec,
+    Capacity, Claim, ClaimVec, DaoActionData, Deposit, DepositVec, Uint64 as DaoActionUint64,
+    Withdraw, WithdrawVec,
 };
 use ckb_testtool::{
     builtin::ALWAYS_SUCCESS,
@@ -7,11 +8,14 @@ use ckb_testtool::{
     ckb_hash::blake2b_256,
     ckb_types::{
         bytes::Bytes,
-        core::{Cycle, TransactionBuilder, TransactionView},
+        core::{
+            Cycle, EpochNumberWithFraction, HeaderBuilder, HeaderView, TransactionBuilder,
+            TransactionView,
+        },
         packed,
         prelude::*,
     },
-    context::Context,
+    context::{random_out_point, Context},
 };
 use ckb_transaction_cobuild::schemas::{
     basic::{Action, ActionVec, Message, SighashAll},
@@ -173,6 +177,7 @@ pub fn build_tx<T: TxSpec>(spec: &mut T) -> TransactionView {
 
 pub struct DefaultTxSpec {
     context: Context,
+    dao_input_out_point: packed::OutPoint,
 
     alice_lock_script: packed::Script,
 
@@ -183,6 +188,7 @@ pub struct DefaultTxSpec {
 impl DefaultTxSpec {
     fn new() -> Self {
         let mut context = Context::default();
+        let dao_input_out_point = random_out_point();
         let loader = Loader::default();
 
         // use always success as lock
@@ -233,6 +239,7 @@ impl DefaultTxSpec {
 
         Self {
             context,
+            dao_input_out_point,
             alice_lock_script,
             verifier_type_script,
             dao_type_script,
@@ -290,11 +297,28 @@ impl Default for DefaultTxSpec {
     }
 }
 
-pub const DEFAULT_CAPACITY: u64 = 1000;
+pub const DEFAULT_CAPACITY: u64 = 1000_0000_0000;
 pub const DAO_DEPOSIT_DATA: [u8; 8] = hex!("0000000000000000");
+pub const DAO_CYCLE: u64 = 180;
+pub const ESITMATED_EPOCH_DURATION: u64 = 4 * 60 * 60 * 1000;
+// data: 8, the block number
+// capacity: 8
+// lock: 32+1+1, always success + arg(1)
+// type: 32+1, dao + arg(0)
+pub const DAO_INPUT_OCCUPIED_CAPACITY: u64 = 83_0000_0000;
 
 pub fn pack_capacity(shannons: u64) -> Capacity {
     Capacity::new_unchecked(Bytes::from(shannons.to_le_bytes().to_vec()))
+}
+
+pub fn pack_uint64(number: u64) -> DaoActionUint64 {
+    DaoActionUint64::new_unchecked(Bytes::from(number.to_le_bytes().to_vec()))
+}
+
+pub fn pack_ar(ar: u64) -> packed::Byte32 {
+    let mut dao_buf = vec![0u8; 32];
+    dao_buf[8..16].copy_from_slice(&ar.to_le_bytes());
+    packed::Byte32::new_unchecked(Bytes::from(dao_buf))
 }
 
 impl TxSpec for DefaultTxSpec {
@@ -324,11 +348,13 @@ impl TxSpec for DefaultTxSpec {
         dao_input_spec: CellSpec,
         dao_output_spec: CellSpec,
     ) -> TransactionBuilder {
-        let dao_cell = self
-            .context
-            .create_cell(dao_input_spec.output.build(), dao_input_spec.data);
+        self.context.create_cell_with_out_point(
+            self.dao_input_out_point.clone(),
+            dao_input_spec.output.build(),
+            dao_input_spec.data,
+        );
         let dao_input = packed::CellInput::new_builder()
-            .previous_output(dao_cell)
+            .previous_output(self.dao_input_out_point.clone())
             .since(dao_input_spec.since)
             .build();
         let dao_output = dao_output_spec.output.build();
@@ -426,4 +452,76 @@ impl CustomTxSpec {
         self.on_new_output_spec = Some(Box::new(cb));
         self
     }
+}
+
+// Create an out point that does not exist in the tx.
+pub fn non_existing_out_point() -> packed::OutPoint {
+    packed::OutPoint::new_builder()
+        .index(u32::MAX.pack())
+        .build()
+}
+
+pub fn create_withdraw_spec<F>(
+    deposit_header: HeaderView,
+    estimated_withdraw_header: Option<HeaderView>,
+    withdraw_builder: F,
+) -> CustomTxSpec
+where
+    F: Fn(&mut CustomTxSpec) -> Withdraw,
+{
+    let mut spec = CustomTxSpec::default();
+
+    let withdraw = withdraw_builder(&mut spec);
+    let mut witnesses = vec![
+        Bytes::new(),
+        Bytes::new(),
+        spec.inner
+            .pack_dao_operations(vec![], vec![withdraw], vec![]),
+    ];
+
+    let deposit_header_hash = deposit_header.hash();
+    let deposit_block_number = pack_uint64(deposit_header.number());
+    spec.inner.context.insert_header(deposit_header);
+    spec.inner.context.link_cell_with_block(
+        spec.inner.dao_input_out_point.clone(),
+        deposit_header_hash.clone(),
+        0,
+    );
+    let mut header_deps = vec![deposit_header_hash];
+    if let Some(withdraw_header) = estimated_withdraw_header {
+        header_deps.push(withdraw_header.hash());
+        spec.inner.context.insert_header(withdraw_header);
+        witnesses[0] = packed::WitnessArgs::new_builder()
+            .input_type(Some(Bytes::from(1u64.to_le_bytes().to_vec())).pack())
+            .build()
+            .as_bytes();
+    }
+
+    let dao_type_script = spec.inner.dao_type_script.clone();
+    spec.on_new_input_spec(move |cell| CellSpec {
+        output: cell.output.type_(Some(dao_type_script.clone()).pack()),
+        data: Bytes::from(DAO_DEPOSIT_DATA.to_vec()),
+        ..cell
+    });
+    spec.on_new_output_spec(move |cell| CellSpec {
+        data: deposit_block_number.as_bytes(),
+        ..cell
+    });
+
+    spec.on_new_tx_builder(move |b| {
+        b.set_witnesses(vec![])
+            .witnesses(witnesses.clone().pack())
+            .header_deps(header_deps.clone())
+    });
+
+    spec
+}
+
+pub fn new_header_builder(number: u64, epoch_length: u64) -> HeaderBuilder {
+    let epoch_number = number / epoch_length;
+    let index = number % epoch_length;
+
+    HeaderBuilder::default()
+        .number(number.pack())
+        .epoch(EpochNumberWithFraction::new(epoch_number, index, epoch_length).pack())
 }
