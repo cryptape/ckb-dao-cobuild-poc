@@ -608,8 +608,10 @@ checksum = "b365fabc795046672053e29c954733ec3b05e4be654ab130fe8f1f94d7051f35"
 name = "dao-action-verifier"
 version = "0.1.0"
 dependencies = [
+ "ckb-dao-cobuild-schemas",
  "ckb-std",
  "ckb-transaction-cobuild",
+ "molecule",
 ]
 
 [[package]]
@@ -717,6 +719,12 @@ checksum = "1679e6ea370dee694f91f1dc469bf94cf8f52051d147aec3e1f9497c6fc22461"
 dependencies = [
  "winapi",
 ]
+
+[[package]]
+name = "hex-literal"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
 
 [[package]]
 name = "includedir"
@@ -1237,7 +1245,10 @@ dependencies = [
 name = "tests"
 version = "0.1.0"
 dependencies = [
+ "ckb-dao-cobuild-schemas",
  "ckb-testtool",
+ "ckb-transaction-cobuild",
+ "hex-literal",
  "serde_json",
 ]
 
