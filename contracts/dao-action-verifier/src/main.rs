@@ -11,11 +11,15 @@ ckb_std::entry!(program_entry);
 #[cfg(all(target_arch = "riscv64", not(test)))]
 default_alloc!();
 
-use ckb_std::error::SysError;
+use ckb_dao_cobuild_schemas::DaoActionDataReader;
+use ckb_std::ckb_types::prelude::*;
+use ckb_transaction_cobuild::fetch_message;
+
+mod constants;
 mod error;
 mod error_code;
 
-use error::Error;
+use crate::{constants::DAO_SCRIPT_HASH, error::Error};
 
 pub fn program_entry() -> i8 {
     match verify() {
@@ -24,6 +28,20 @@ pub fn program_entry() -> i8 {
     }
 }
 
-pub fn verify() -> Result<(), Error> {
-    Err(trace_error!(SysError::IndexOutOfBound, "error"))
+fn verify() -> Result<(), Error> {
+    if let Ok(Some(message)) = fetch_message() {
+        for action in message.actions().into_iter() {
+            if action.script_hash().as_slice() == DAO_SCRIPT_HASH {
+                verify_action_data(&action.data().raw_data())?;
+            }
+        }
+    }
+
+    // It's OK to not include DAO action data
+    Ok(())
+}
+
+fn verify_action_data(data: &[u8]) -> Result<(), Error> {
+    DaoActionDataReader::from_slice(data).map_err(|err| trace_error!(err))?;
+    Ok(())
 }

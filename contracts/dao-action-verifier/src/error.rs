@@ -4,6 +4,7 @@ use ckb_std::error::SysError;
 #[derive(Debug)]
 pub enum Error {
     CkbStd(SysError),
+    InvalidActionDataSchema(molecule::error::VerificationError),
 }
 
 impl From<Error> for ErrorCode {
@@ -16,6 +17,7 @@ impl From<Error> for ErrorCode {
                 SysError::Encoding => ErrorCode::Encoding,
                 SysError::Unknown(_) => ErrorCode::Unknown,
             },
+            Error::InvalidActionDataSchema(_) => ErrorCode::InvalidActionDataSchema,
         }
     }
 }
@@ -32,9 +34,21 @@ impl From<SysError> for Error {
     }
 }
 
+impl From<molecule::error::VerificationError> for Error {
+    fn from(err: molecule::error::VerificationError) -> Self {
+        Error::InvalidActionDataSchema(err)
+    }
+}
+
 #[macro_export]
 macro_rules! trace_error {
-    ($err:expr, $message:literal) => {{
+    ($err:expr) => {{
+        let err = $crate::error::Error::from($err);
+        #[cfg(debug_assertions)]
+        ckb_std::debug!("{}:{} {:?}", file!(), line!(), err);
+        err
+    }};
+    ($err:expr, $message:expr) => {{
         let err = $crate::error::Error::from($err);
         #[cfg(debug_assertions)]
         ckb_std::debug!("{}:{} {:?} {}", file!(), line!(), err, $message);

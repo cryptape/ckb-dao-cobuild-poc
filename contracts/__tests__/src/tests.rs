@@ -1,54 +1,65 @@
 // Include your tests here
 // See https://github.com/xxuejie/ckb-native-build-sample/blob/main/tests/src/tests.rs for examples
 
-use crate::Loader;
-use ckb_testtool::{
-    ckb_types::{bytes::Bytes, core::TransactionBuilder, packed, prelude::*},
-    context::Context,
-};
-
-include!("../../dao-action-verifier/src/error_code.rs");
+use crate::*;
+use ckb_dao_cobuild_schemas::DaoActionData;
 
 const MAX_CYCLES: u64 = 10_000_000;
 
 #[test]
-fn test_fail() {
-    let loader = Loader::default();
-    let mut context = Context::default();
+fn test_null_dao_data() {
+    let mut spec = DefaultTxSpec::new();
 
-    let bin = loader.load_binary("dao-action-verifier");
-    let out_point = context.deploy_cell(bin);
+    let tx = build_tx(&mut spec);
+    verify_and_dump_failed_tx(&spec.context, &tx, MAX_CYCLES).expect("pass");
+}
 
-    let lock_script = context
-        .build_script(&out_point, Default::default())
-        .expect("script");
+#[test]
+fn test_invalid_dao_data() {
+    let mut spec = CustomTxSpec::default();
+    let witness = spec.inner.pack_dao_data(Bytes::new());
+    spec.on_new_tx_builder(move |b| b.witness(witness.clone().pack()));
 
-    let input_out_point = context.create_cell(
-        packed::CellOutput::new_builder()
-            .capacity(1000u64.pack())
-            .lock(lock_script.clone())
-            .build(),
-        Bytes::new(),
+    let tx = build_tx(&mut spec);
+    assert_tx_error(
+        &spec.inner.context,
+        &tx,
+        ErrorCode::InvalidActionDataSchema,
+        MAX_CYCLES,
     );
-    let input = packed::CellInput::new_builder()
-        .previous_output(input_out_point)
-        .build();
+}
 
-    let outputs = vec![packed::CellOutput::new_builder()
-        .capacity(1000u64.pack())
-        .lock(lock_script.clone())
-        .build()];
+#[test]
+fn test_empty_dao_ops() {
+    let mut spec = CustomTxSpec::default();
+    let witness = spec
+        .inner
+        .pack_dao_data_vec(vec![DaoActionData::default().as_bytes()]);
+    // unset deposit
+    spec.on_new_output_spec(|cell| CellSpec {
+        output: cell.output.type_(packed::ScriptOpt::default()),
+        ..cell
+    });
+    spec.on_new_tx_builder(move |b| b.witness(witness.clone().pack()));
 
-    let outputs_data = vec![Bytes::new()];
+    let tx = build_tx(&mut spec);
+    verify_and_dump_failed_tx(&spec.inner.context, &tx, MAX_CYCLES).expect("pass");
+}
 
-    let tx = TransactionBuilder::default()
-        .input(input)
-        .outputs(outputs)
-        .outputs_data(outputs_data.pack())
-        .build();
+#[test]
+fn test_multiple_dao_actions() {
+    let mut spec = CustomTxSpec::default();
+    let witness = spec.inner.pack_dao_data_vec(vec![
+        DaoActionData::default().as_bytes(),
+        DaoActionData::default().as_bytes(),
+    ]);
+    // unset deposit
+    spec.on_new_output_spec(|cell| CellSpec {
+        output: cell.output.type_(packed::ScriptOpt::default()),
+        ..cell
+    });
+    spec.on_new_tx_builder(move |b| b.witness(witness.clone().pack()));
 
-    let tx = context.complete_tx(tx);
-
-    let result = context.verify_tx(&tx, MAX_CYCLES);
-    assert!(result.is_err());
+    let tx = build_tx(&mut spec);
+    verify_and_dump_failed_tx(&spec.inner.context, &tx, MAX_CYCLES).expect("pass");
 }
