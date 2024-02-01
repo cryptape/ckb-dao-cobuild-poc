@@ -13,4 +13,6 @@ pub enum ErrorCode {
     InvalidActionDataSchema = 65,
     NotCoverred = 66,
     NotFound = 67,
+    NotMatched = 68,
+    InvalidHeaderDepIndex = 69,
 }
