@@ -10,6 +10,11 @@ contract: schemas
 	make -f contracts.mk build
 	make CARGO_ARGS="${CARGO_TEST_ARGS}" -f contracts.mk test
 
+contract-linters:
+	make -f contracts.mk fmt
+	make -f contracts.mk check
+	make -f contracts.mk clippy
+
 SCHEMA_MOL_FILES := $(wildcard schemas/*.mol)
 SCHEMA_RUST_FILES := $(patsubst %.mol,crates/ckb-dao-cobuild-schemas/src/%.rs,$(SCHEMA_MOL_FILES))
 crates/ckb-dao-cobuild-schemas/src/%.rs: %.mol
@@ -20,4 +25,4 @@ schemas: $(SCHEMA_RUST_FILES)
 clean-schemas:
 	rm -f $(SCHEMA_RUST_FILES)
 
-.PHONY: all web contract schemas clean-schemas
+.PHONY: all web contract contract-linters schemas clean-schemas

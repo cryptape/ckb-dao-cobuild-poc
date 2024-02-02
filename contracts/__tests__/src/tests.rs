@@ -971,6 +971,7 @@ fn test_dao_claim_componsation_amount_not_matched() {
 
 #[test]
 fn test_dao_claim_pass() {
+    let componsation = (DEFAULT_CAPACITY - DAO_INPUT_OCCUPIED_CAPACITY) / 10;
     let mut spec = create_claim_spec(
         new_header_builder(1, 100).dao(pack_ar(100)).build(),
         new_header_builder(2, 100).dao(pack_ar(110)).build(),
@@ -994,9 +995,7 @@ fn test_dao_claim_pass() {
                 .withdraw_info(
                     WithdrawInfo::new_builder()
                         .withdraw_block_number(pack_uint64(2))
-                        .componsation_amount(pack_capacity(
-                            (DEFAULT_CAPACITY - DAO_INPUT_OCCUPIED_CAPACITY) / 10,
-                        ))
+                        .componsation_amount(pack_capacity(componsation))
                         .build(),
                 )
                 .build()
@@ -1005,4 +1004,302 @@ fn test_dao_claim_pass() {
 
     let tx = build_tx(&mut spec);
     verify_and_dump_failed_tx(&spec.inner.context, &tx, MAX_CYCLES).expect("pass");
+}
+
+#[test]
+fn test_dao_insufficient_deposit_from() {
+    let mut spec = CustomTxSpec::default();
+    let witness = spec.inner.pack_dao_operations(
+        vec![Deposit::new_builder()
+            .from(Address::new_unchecked(
+                spec.inner.alice_lock_script.as_bytes(),
+            ))
+            .to(Address::new_unchecked(
+                spec.inner.alice_lock_script.as_bytes(),
+            ))
+            .amount(pack_capacity(DEFAULT_CAPACITY))
+            .build()],
+        vec![],
+        vec![],
+    );
+    spec.on_new_input_spec(|cell| CellSpec {
+        output: cell.output.capacity((DEFAULT_CAPACITY - 1).pack()),
+        ..cell
+    });
+    spec.on_new_tx_builder(move |b| b.witness(witness.clone().pack()));
+
+    let tx = build_tx(&mut spec);
+    assert_tx_error(
+        &spec.inner.context,
+        &tx,
+        ErrorCode::InsufficientDepositFrom,
+        MAX_CYCLES,
+    );
+}
+
+#[test]
+fn test_dao_insufficient_claim_to() {
+    let componsation = (DEFAULT_CAPACITY - DAO_INPUT_OCCUPIED_CAPACITY) / 10;
+    let mut spec = create_claim_spec(
+        new_header_builder(1, 100).dao(pack_ar(100)).build(),
+        new_header_builder(2, 100).dao(pack_ar(110)).build(),
+        |spec| {
+            Claim::new_builder()
+                .cell_pointer(OutPoint::new_unchecked(
+                    spec.inner.dao_input_out_point.as_bytes(),
+                ))
+                .from(Address::new_unchecked(
+                    spec.inner.alice_lock_script.as_bytes(),
+                ))
+                .to(Address::new_unchecked(
+                    spec.inner.alice_lock_script.as_bytes(),
+                ))
+                .deposit_info(
+                    DepositInfo::new_builder()
+                        .deposit_block_number(pack_uint64(1))
+                        .amount(pack_capacity(DEFAULT_CAPACITY))
+                        .build(),
+                )
+                .withdraw_info(
+                    WithdrawInfo::new_builder()
+                        .withdraw_block_number(pack_uint64(2))
+                        .componsation_amount(pack_capacity(componsation))
+                        .build(),
+                )
+                .build()
+        },
+    );
+    spec.on_new_output_spec(move |cell| CellSpec {
+        output: cell
+            .output
+            .capacity((DEFAULT_CAPACITY + componsation - 1).pack())
+            .type_(packed::ScriptOpt::default()),
+        data: Bytes::new(),
+        ..cell
+    });
+
+    let tx = build_tx(&mut spec);
+    assert_tx_error(
+        &spec.inner.context,
+        &tx,
+        ErrorCode::InsufficientClaimTo,
+        MAX_CYCLES,
+    );
+}
+
+#[test]
+fn test_dao_claim_to_deposit() {
+    let componsation = (DEFAULT_CAPACITY - DAO_INPUT_OCCUPIED_CAPACITY) / 10;
+
+    let mut spec = create_claim_spec(
+        new_header_builder(1, 100).dao(pack_ar(100)).build(),
+        new_header_builder(2, 100).dao(pack_ar(110)).build(),
+        |_spec| Claim::default(),
+    );
+    spec.on_new_output_spec(move |cell| CellSpec {
+        output: cell
+            .output
+            .capacity((DEFAULT_CAPACITY + componsation).pack()),
+        ..cell
+    });
+
+    let claim = Claim::new_builder()
+        .cell_pointer(OutPoint::new_unchecked(
+            spec.inner.dao_input_out_point.as_bytes(),
+        ))
+        .from(Address::new_unchecked(
+            spec.inner.alice_lock_script.as_bytes(),
+        ))
+        .to(Address::new_unchecked(
+            spec.inner.alice_lock_script.as_bytes(),
+        ))
+        .deposit_info(
+            DepositInfo::new_builder()
+                .deposit_block_number(pack_uint64(1))
+                .amount(pack_capacity(DEFAULT_CAPACITY))
+                .build(),
+        )
+        .withdraw_info(
+            WithdrawInfo::new_builder()
+                .withdraw_block_number(pack_uint64(2))
+                .componsation_amount(pack_capacity(componsation))
+                .build(),
+        )
+        .build();
+    let deposit = Deposit::new_builder()
+        .from(Address::new_unchecked(
+            spec.inner.alice_lock_script.as_bytes(),
+        ))
+        .to(Address::new_unchecked(
+            spec.inner.alice_lock_script.as_bytes(),
+        ))
+        .amount(pack_capacity(DEFAULT_CAPACITY + componsation))
+        .build();
+
+    let witnesses = vec![
+        packed::WitnessArgs::new_builder()
+            .input_type(Some(Bytes::from(0u64.to_le_bytes().to_vec())).pack())
+            .build()
+            .as_bytes(),
+        Bytes::new(),
+        spec.inner
+            .pack_dao_operations(vec![deposit], vec![], vec![claim]),
+    ];
+    let remember_on_new_tx_builder = spec.on_new_tx_builder.take().unwrap();
+    spec.on_new_tx_builder(move |b| {
+        remember_on_new_tx_builder(b)
+            .set_witnesses(vec![])
+            .witnesses(witnesses.clone().pack())
+    });
+
+    let tx = build_tx(&mut spec);
+    verify_and_dump_failed_tx(&spec.inner.context, &tx, MAX_CYCLES).expect("pass");
+}
+
+#[test]
+fn test_dao_claim_to_deposit_insufficient_claim_to() {
+    let componsation = (DEFAULT_CAPACITY - DAO_INPUT_OCCUPIED_CAPACITY) / 10;
+
+    let mut spec = create_claim_spec(
+        new_header_builder(1, 100).dao(pack_ar(100)).build(),
+        new_header_builder(2, 100).dao(pack_ar(110)).build(),
+        |_spec| Claim::default(),
+    );
+    spec.on_new_output_spec(move |cell| CellSpec {
+        output: cell
+            .output
+            .capacity((DEFAULT_CAPACITY + componsation - 1).pack()),
+        ..cell
+    });
+
+    let claim = Claim::new_builder()
+        .cell_pointer(OutPoint::new_unchecked(
+            spec.inner.dao_input_out_point.as_bytes(),
+        ))
+        .from(Address::new_unchecked(
+            spec.inner.alice_lock_script.as_bytes(),
+        ))
+        .to(Address::new_unchecked(
+            spec.inner.alice_lock_script.as_bytes(),
+        ))
+        .deposit_info(
+            DepositInfo::new_builder()
+                .deposit_block_number(pack_uint64(1))
+                .amount(pack_capacity(DEFAULT_CAPACITY))
+                .build(),
+        )
+        .withdraw_info(
+            WithdrawInfo::new_builder()
+                .withdraw_block_number(pack_uint64(2))
+                .componsation_amount(pack_capacity(componsation))
+                .build(),
+        )
+        .build();
+    let deposit = Deposit::new_builder()
+        .from(Address::new_unchecked(
+            spec.inner.alice_lock_script.as_bytes(),
+        ))
+        .to(Address::new_unchecked(
+            spec.inner.alice_lock_script.as_bytes(),
+        ))
+        .amount(pack_capacity(DEFAULT_CAPACITY + componsation - 1))
+        .build();
+
+    let witnesses = vec![
+        packed::WitnessArgs::new_builder()
+            .input_type(Some(Bytes::from(0u64.to_le_bytes().to_vec())).pack())
+            .build()
+            .as_bytes(),
+        Bytes::new(),
+        spec.inner
+            .pack_dao_operations(vec![deposit], vec![], vec![claim]),
+    ];
+    let remember_on_new_tx_builder = spec.on_new_tx_builder.take().unwrap();
+    spec.on_new_tx_builder(move |b| {
+        remember_on_new_tx_builder(b)
+            .set_witnesses(vec![])
+            .witnesses(witnesses.clone().pack())
+    });
+
+    let tx = build_tx(&mut spec);
+    assert_tx_error(
+        &spec.inner.context,
+        &tx,
+        ErrorCode::InsufficientClaimTo,
+        MAX_CYCLES,
+    );
+}
+
+#[test]
+fn test_dao_claim_to_deposit_insufficient_deposit_from() {
+    let componsation = (DEFAULT_CAPACITY - DAO_INPUT_OCCUPIED_CAPACITY) / 10;
+
+    let mut spec = create_claim_spec(
+        new_header_builder(1, 100).dao(pack_ar(100)).build(),
+        new_header_builder(2, 100).dao(pack_ar(110)).build(),
+        |_spec| Claim::default(),
+    );
+    spec.on_new_output_spec(move |cell| CellSpec {
+        output: cell
+            .output
+            .capacity((DEFAULT_CAPACITY + componsation + 1).pack()),
+        ..cell
+    });
+
+    let claim = Claim::new_builder()
+        .cell_pointer(OutPoint::new_unchecked(
+            spec.inner.dao_input_out_point.as_bytes(),
+        ))
+        .from(Address::new_unchecked(
+            spec.inner.alice_lock_script.as_bytes(),
+        ))
+        .to(Address::new_unchecked(
+            spec.inner.alice_lock_script.as_bytes(),
+        ))
+        .deposit_info(
+            DepositInfo::new_builder()
+                .deposit_block_number(pack_uint64(1))
+                .amount(pack_capacity(DEFAULT_CAPACITY))
+                .build(),
+        )
+        .withdraw_info(
+            WithdrawInfo::new_builder()
+                .withdraw_block_number(pack_uint64(2))
+                .componsation_amount(pack_capacity(componsation))
+                .build(),
+        )
+        .build();
+    let deposit = Deposit::new_builder()
+        .from(Address::new_unchecked(
+            spec.inner.alice_lock_script.as_bytes(),
+        ))
+        .to(Address::new_unchecked(
+            spec.inner.alice_lock_script.as_bytes(),
+        ))
+        .amount(pack_capacity(DEFAULT_CAPACITY + componsation + 1))
+        .build();
+
+    let witnesses = vec![
+        packed::WitnessArgs::new_builder()
+            .input_type(Some(Bytes::from(0u64.to_le_bytes().to_vec())).pack())
+            .build()
+            .as_bytes(),
+        Bytes::new(),
+        spec.inner
+            .pack_dao_operations(vec![deposit], vec![], vec![claim]),
+    ];
+    let remember_on_new_tx_builder = spec.on_new_tx_builder.take().unwrap();
+    spec.on_new_tx_builder(move |b| {
+        remember_on_new_tx_builder(b)
+            .set_witnesses(vec![])
+            .witnesses(witnesses.clone().pack())
+    });
+
+    let tx = build_tx(&mut spec);
+    assert_tx_error(
+        &spec.inner.context,
+        &tx,
+        ErrorCode::InsufficientDepositFrom,
+        MAX_CYCLES,
+    );
 }

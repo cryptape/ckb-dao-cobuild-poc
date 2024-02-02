@@ -15,4 +15,6 @@ pub enum ErrorCode {
     NotFound = 67,
     NotMatched = 68,
     InvalidHeaderDepIndex = 69,
+    InsufficientDepositFrom = 70,
+    InsufficientClaimTo = 71,
 }
