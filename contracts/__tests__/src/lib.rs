@@ -517,6 +517,60 @@ where
     spec
 }
 
+pub fn create_claim_spec<F>(
+    deposit_header: HeaderView,
+    withdraw_header: HeaderView,
+    claim_builder: F,
+) -> CustomTxSpec
+where
+    F: Fn(&mut CustomTxSpec) -> Claim,
+{
+    let mut spec = CustomTxSpec::default();
+    let claim = claim_builder(&mut spec);
+
+    let deposit_header_hash = deposit_header.hash();
+    let deposit_block_number = pack_uint64(deposit_header.number());
+    let withdraw_header_hash = withdraw_header.hash();
+
+    spec.inner.context.insert_header(deposit_header);
+    spec.inner.context.insert_header(withdraw_header);
+    spec.inner.context.link_cell_with_block(
+        spec.inner.dao_input_out_point.clone(),
+        withdraw_header_hash.clone(),
+        0,
+    );
+
+    let witnesses = vec![
+        packed::WitnessArgs::new_builder()
+            .input_type(Some(Bytes::from(0u64.to_le_bytes().to_vec())).pack())
+            .build()
+            .as_bytes(),
+        Bytes::new(),
+        spec.inner.pack_dao_operations(vec![], vec![], vec![claim]),
+    ];
+    let header_deps = vec![deposit_header_hash, withdraw_header_hash];
+
+    let dao_type_script = spec.inner.dao_type_script.clone();
+    spec.on_new_input_spec(move |cell| CellSpec {
+        output: cell.output.type_(Some(dao_type_script.clone()).pack()),
+        data: deposit_block_number.as_bytes(),
+        ..cell
+    });
+    spec.on_new_output_spec(|cell| CellSpec {
+        output: cell.output.type_(packed::ScriptOpt::default()),
+        data: Bytes::new(),
+        ..cell
+    });
+
+    spec.on_new_tx_builder(move |b| {
+        b.set_witnesses(vec![])
+            .witnesses(witnesses.clone().pack())
+            .header_deps(header_deps.clone())
+    });
+
+    spec
+}
+
 pub fn new_header_builder(number: u64, epoch_length: u64) -> HeaderBuilder {
     let epoch_number = number / epoch_length;
     let index = number % epoch_length;

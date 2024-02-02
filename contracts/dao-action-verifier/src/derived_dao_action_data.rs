@@ -2,7 +2,7 @@
 use core::cmp;
 
 use alloc::collections::BTreeMap;
-use ckb_dao_cobuild_schemas::{DaoActionData, Deposit, OutPoint, Withdraw};
+use ckb_dao_cobuild_schemas::{Claim, DaoActionData, Deposit, OutPoint, Withdraw};
 use ckb_std::{
     ckb_constants::Source,
     ckb_types::{bytes::Bytes, packed, prelude::*},
@@ -38,10 +38,14 @@ pub struct WithdrawValue {
     input_cell_output: packed::CellOutput,
 }
 
+pub type ClaimKey = WithdrawKey;
+pub type ClaimValue = WithdrawValue;
+
 #[derive(Default, Debug)]
 pub struct DerivedDaoActionData {
     deposits: BTreeMap<DepositKey, usize>,
     withdraws: BTreeMap<WithdrawKey, WithdrawValue>,
+    claims: BTreeMap<ClaimKey, ClaimValue>,
 }
 
 fn is_deposit_cell(index: usize, source: Source) -> bool {
@@ -140,11 +144,10 @@ impl DerivedDaoActionData {
             .collect();
 
         #[allow(clippy::mutable_key_type)]
-        let withdraws = QueryIter::new(load_cell, Source::Input)
+        let (withdraws, claims) = QueryIter::new(load_cell, Source::Input)
             .enumerate()
-            .filter(|(index, input_cell_output)| {
+            .filter(|(_index, input_cell_output)| {
                 input_cell_output.type_().as_slice() == DAO_TYPE_SCRIPT
-                    && is_deposit_cell(*index, Source::Input)
             })
             .map(|(index, input_cell_output)| {
                 (
@@ -157,11 +160,12 @@ impl DerivedDaoActionData {
                     },
                 )
             })
-            .collect();
+            .partition(|(_key, value)| is_deposit_cell(value.index, Source::Input));
 
         Self {
             deposits,
             withdraws,
+            claims,
         }
     }
 
@@ -181,6 +185,13 @@ impl DerivedDaoActionData {
                 value.index
             ));
         }
+        if let Some(value) = self.claims.into_values().next() {
+            return Err(trace_error!(
+                ErrorCode::NotCoverred,
+                "claim at input {} not coverred by dao action",
+                value.index
+            ));
+        }
 
         Ok(())
     }
@@ -191,6 +202,9 @@ impl DerivedDaoActionData {
         }
         for withdraw in dao_action_data.withdraws().into_iter() {
             self.verify_withdraw(withdraw)?;
+        }
+        for claim in dao_action_data.claims().into_iter() {
+            self.verify_claim(claim)?;
         }
 
         Ok(())
@@ -363,6 +377,128 @@ impl DerivedDaoActionData {
                 ErrorCode::NotFound,
                 "withdraw not found in tx: {}",
                 withdraw
+            )),
+        }
+    }
+
+    fn verify_claim(&mut self, claim: Claim) -> Result<(), Error> {
+        match self.claims.remove(&((&claim.cell_pointer()).into())) {
+            Some(ClaimValue {
+                index,
+                input_cell_output,
+            }) => {
+                if input_cell_output.lock().as_slice() != claim.from().as_slice() {
+                    return Err(trace_error!(
+                        ErrorCode::NotMatched,
+                        "expect claim from {}, got {}",
+                        claim.from(),
+                        input_cell_output.lock()
+                    ));
+                }
+
+                let deposit_info = claim.deposit_info();
+                if input_cell_output.capacity().as_slice() != deposit_info.amount().as_slice() {
+                    return Err(trace_error!(
+                        ErrorCode::NotMatched,
+                        "expect claim amount {}, got {}",
+                        deposit_info.amount(),
+                        input_cell_output.capacity()
+                    ));
+                }
+
+                let deposit_header = load_header_from_witness(
+                    load_witness_args(index, Source::Input)
+                        .map_err(|err| {
+                            trace_error!(err, "failed to load witness args at {}", index)
+                        })?
+                        .input_type()
+                        .to_opt()
+                        .ok_or_else(|| {
+                            trace_error!(
+                                ErrorCode::InvalidHeaderDepIndex,
+                                "invalid witness args input type at {}",
+                                index
+                            )
+                        })?
+                        .raw_data()
+                        .as_ref(),
+                )?;
+                if deposit_header.number().as_slice()
+                    != deposit_info.deposit_block_number().as_slice()
+                {
+                    return Err(trace_error!(
+                        ErrorCode::NotMatched,
+                        "expect deposit block number {}, got {}",
+                        deposit_info.deposit_block_number(),
+                        deposit_header.number()
+                    ));
+                }
+                if deposit_header.timestamp().as_slice()
+                    != deposit_info.deposit_timestamp().as_slice()
+                {
+                    return Err(trace_error!(
+                        ErrorCode::NotMatched,
+                        "expect deposit block timestamp {}, got {}",
+                        deposit_info.deposit_timestamp(),
+                        deposit_header.timestamp()
+                    ));
+                }
+
+                let withdraw_header = load_header(index, Source::Input)?.raw();
+                let withdraw_info = claim.withdraw_info();
+                if withdraw_header.number().unpack() < deposit_header.number().unpack() {
+                    return Err(trace_error!(
+                        ErrorCode::NotMatched,
+                        "expect withdraw block number >= {}, got {}",
+                        deposit_header.number(),
+                        withdraw_header.number()
+                    ));
+                }
+                if withdraw_header.number().as_slice()
+                    != withdraw_info.withdraw_block_number().as_slice()
+                {
+                    return Err(trace_error!(
+                        ErrorCode::NotMatched,
+                        "expect withdraw block number {}, got {}",
+                        withdraw_info.withdraw_block_number(),
+                        withdraw_header.number()
+                    ));
+                }
+                if withdraw_header.timestamp().as_slice()
+                    != withdraw_info.withdraw_timestamp().as_slice()
+                {
+                    return Err(trace_error!(
+                        ErrorCode::NotMatched,
+                        "expect withdraw block timestamp {}, got {}",
+                        withdraw_info.withdraw_timestamp(),
+                        withdraw_header.timestamp()
+                    ));
+                }
+
+                let counted_capacity = input_cell_output.capacity().unpack()
+                    - load_cell_occupied_capacity(index, Source::Input)?;
+                let actual_componsation_amount = compute_componsation_amount(
+                    counted_capacity,
+                    &deposit_header,
+                    &withdraw_header,
+                );
+                if actual_componsation_amount.as_slice()
+                    != withdraw_info.componsation_amount().as_slice()
+                {
+                    return Err(trace_error!(
+                        ErrorCode::NotMatched,
+                        "expect withdraw componsation amount {}, got {}",
+                        withdraw_info.componsation_amount(),
+                        actual_componsation_amount
+                    ));
+                }
+
+                Ok(())
+            }
+            None => Err(trace_error!(
+                ErrorCode::NotFound,
+                "claim not found in tx: {}",
+                claim
             )),
         }
     }
