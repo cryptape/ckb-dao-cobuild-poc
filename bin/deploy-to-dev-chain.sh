@@ -35,7 +35,12 @@ function deploy() {
   ckb-cli deploy apply-txs --info-file "$INFO_FILE" --migration-dir "$MIGRATION_DIR"
 }
 
-deploy joyid
+deploy dao-action-verifier
+bin/generate-blocks.sh 4
+sleep 1
+
+# try twice in case the indexer has not updated yet
+deploy joyid || deploy joyid
 bin/generate-blocks.sh 4
 sleep 1
 
