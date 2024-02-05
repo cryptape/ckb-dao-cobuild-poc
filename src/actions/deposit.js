@@ -9,7 +9,7 @@ import { payFee } from "@/lib/cobuild/fee-manager";
 export default async function deposit(_prevState, formData, config) {
   config = config ?? getConfig();
 
-  const from = formData.get("lock");
+  const from = formData.get("from");
 
   try {
     let buildingPacket = await depositDao(config)(formData);

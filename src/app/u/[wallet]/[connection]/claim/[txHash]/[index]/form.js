@@ -11,11 +11,6 @@ import useHeaderByNumber from "@/hooks/use-header-by-number";
 import useCell from "@/hooks/use-cell";
 
 import Capacity from "@/components/capacity";
-import {
-  DaoCycleProgress,
-  DaoCycleProgressHint,
-  daoCycleProgressColor,
-} from "@/components/dao-cycle-progress";
 import * as dao from "@/lib/dao";
 import Loading from "./loading";
 import SignForm from "../../../sign-form";
