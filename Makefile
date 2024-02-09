@@ -4,8 +4,18 @@ web:
 	pnpm lint
 	pnpm test
 
-contract:
+contract: schemas
 	make -f contracts.mk build
 	make CARGO_ARGS="-- --nocapture" -f contracts.mk test
 
-.PHONY: all web contract
+SCHEMA_MOL_FILES := $(wildcard schemas/*.mol)
+SCHEMA_RUST_FILES := $(patsubst %.mol,crates/ckb-dao-cobuild-schemas/src/%.rs,$(SCHEMA_MOL_FILES))
+crates/ckb-dao-cobuild-schemas/src/%.rs: %.mol
+	moleculec --language rust --schema-file $< > $@
+	cargo fmt
+
+schemas: $(SCHEMA_RUST_FILES)
+clean-schemas:
+	rm -f $(SCHEMA_RUST_FILES)
+
+.PHONY: all web contract schemas clean-schemas

@@ -12,6 +12,32 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  check-schemas:
+    name: Contract - Check Schemas
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Set up Clang
+        uses: egor-tensin/setup-clang@v1
+        with:
+          version: 17
+
+      - name: Setup up Rust
+        run: |
+          rustup target add riscv64imac-unknown-none-elf
+
+      - name: Schemas Is Up to Date
+        run: |
+          cargo install moleculec --locked
+          make clean-schemas schemas
+          git diff --exit-code .
+
   linters:
     name: Contract - Linters
     timeout-minutes: 15
@@ -67,4 +93,11 @@ jobs:
           rustup target add riscv64imac-unknown-none-elf
 
       - name: Build & Test
-        run: make contract
+        run: |
+          touch crates/ckb-dao-cobuild-schemas/src/schemas/*
+          make contract
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: contracts
+          path: build/release/
