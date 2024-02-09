@@ -25,6 +25,7 @@ esac
 
 JOYID_INFO_FILE="$(ls migrations/joyid/*.json | grep -v deployment | head -n 1)"
 OMNILOCK_INFO_FILE="$(ls migrations/omnilock/*.json | grep -v deployment | head -n 1)"
+DAO_ACTION_VERIFIER_INFO_FILE="$(ls migrations/dao-action-verifier/*.json | grep -v deployment | head -n 1)"
 
 sed -n \
   -e 's/,$//' \
@@ -45,3 +46,13 @@ sed -n \
   -e 's/,$//' \
   -e 's/^ *"tx_hash": /NEXT_PUBLIC_OMNILOCK_TX_HASH=/p' \
   "$OMNILOCK_INFO_FILE" | tail -1
+
+sed -n \
+  -e 's/,$//' \
+  -e 's/^ *"type_id": "/NEXT_PUBLIC_DAO_ACTION_VERIFIER_CODE_HASH="/p' \
+  "$DAO_ACTION_VERIFIER_INFO_FILE" | head -1
+
+sed -n \
+  -e 's/,$//' \
+  -e 's/^ *"tx_hash": /NEXT_PUBLIC_DAO_ACTION_VERIFIER_TX_HASH=/p' \
+  "$DAO_ACTION_VERIFIER_INFO_FILE" | tail -1

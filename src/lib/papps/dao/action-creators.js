@@ -11,13 +11,6 @@ function addressToScriptOpt(address, lumosOptions) {
   return undefined;
 }
 
-function buildSingleOperation(operation) {
-  return {
-    type: "SingleOperation",
-    value: operation,
-  };
-}
-
 export function depositWithFormData(config, formData) {
   const lumosOptions = { config: config.ckbChainConfig };
 

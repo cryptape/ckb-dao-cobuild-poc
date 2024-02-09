@@ -399,7 +399,7 @@ export function TxSection({
 
   return (
     <dl className="divide-y divide-gray-100">
-      {process.env.DEBUG !== undefined ? (
+      {process.env.NODE_ENV === "development" ? (
         <div className="py-3 sm:grid sm:grid-cols-3">
           <dt className="leading-6 text-gray-900">Hash</dt>
           <dd className="text-gray-700 sm:col-span-2 sm:mt-0 break-all">
@@ -567,7 +567,7 @@ function collectAssets(
     } else if (isNoneDaoTypedCell(cellOutput, cellData, ckbChainConfig)) {
       assets.destroyedTypedCells.push({
         cellOutput,
-        outPoint: buildingPacket.value.packet.inputs[i].previousOutput,
+        outPoint: buildingPacket.value.payload.inputs[i].previousOutput,
         data: cellData,
       });
     }
@@ -582,7 +582,7 @@ function collectAssets(
       assets.daoDeposited = assets.daoDeposited.add(cellCapacity);
     } else if (isNoneDaoTypedCell(cellOutput, cellData, ckbChainConfig)) {
       assets.createdTypedCells.push({
-        outPoint: buildingPacket.value.packet.inputs[i].previousOutput,
+        outPoint: buildingPacket.value.payload.outputs[i].previousOutput,
         data: cellData,
       });
     }

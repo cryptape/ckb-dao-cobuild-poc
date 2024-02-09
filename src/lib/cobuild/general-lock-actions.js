@@ -66,13 +66,13 @@ export function prepareLockActionWithWitnessStore(
 export function storeWitnessForFeeEstimation(
   buildingPacket,
   scriptHash,
-  inputIndices,
+  witnessStore,
   createSealPlaceHolder,
 ) {
-  buildingPacket = prepareLockAction(
+  buildingPacket = prepareLockActionWithWitnessStore(
     buildingPacket,
     scriptHash,
-    inputIndices,
+    witnessStore,
     createSealPlaceHolder,
   );
   const lockAction = buildingPacket.value.lockActions.find(
