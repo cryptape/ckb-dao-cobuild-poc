@@ -1,0 +1,92 @@
+// The `UintN` is used to store a `N` bits unsigned integer
+// as a byte array in little endian.
+array Uint32 [byte; 4];
+array Uint64 [byte; 8];
+
+array Byte32 [byte; 32];
+vector Bytes <byte>;
+
+struct Capacity {
+    shannons: Uint64,
+}
+struct Timestamp {
+    unix_milliseconds: Uint64,
+}
+
+table Address {
+    code_hash: Byte32,
+    hash_type: byte,
+    args: Bytes,
+}
+
+struct OutPoint {
+    tx_hash: Byte32,
+    index: Uint32,
+}
+
+struct DepositInfo {
+    // The deposited amount.
+    amount: Capacity,
+    deposit_block_number: Uint64,
+    deposit_timestamp: Timestamp,
+}
+
+struct WithdrawInfo {
+    withdraw_block_number: Uint64,
+    withdraw_timestamp: Timestamp,
+    // Componsation from DAO
+    componsation_amount: Capacity,
+}
+
+struct EstimatedWithdrawInfo {
+    // Estimate the waiting time by assume a whole epoch takes 4 hours.
+    waiting_milliseconds: Uint64,
+    // The withdraw info if the withdraw transaction was committed in the reference block.
+    withdraw_info: WithdrawInfo,
+}
+
+option EstimatedWithdrawInfoOpt (EstimatedWithdrawInfo);
+
+table Deposit {
+    from: Address,
+    to: Address,
+    amount: Capacity,
+}
+
+table Withdraw {
+    cell_pointer: OutPoint,
+    // From must match the lock script of the input cell referenced by `cell_pointer`.
+    from: Address,
+    // Must be the same size with from. It must match the lock script of the output cell
+    // at the same position as the deposit cell in inputs.
+    to: Address,
+    deposit_info: DepositInfo,
+    // To add estimated withdraw info, the reference block hash must be added to the header deps,
+    // and the index of the renference block in the header deps must be set in the witness at the same position
+    // as the withdraw input cell. The witness is to the `input_type` field using `WitnessArgs` format.
+    // To include estimated withdrawal information, the reference block hash should be added to the header deps.
+    // Additionally, the index of the reference block in the header deps must be the same with the deposit cell in inputs.
+    // The witness must use `WitnessArgs` format and the index is saved in the field `input_type` as a 64-bit unsinged integer
+    // in little-endian.
+    estimated_withdraw_info: EstimatedWithdrawInfoOpt,
+}
+
+table Claim {
+    cell_pointer: OutPoint,
+    // From must match the lock script of the input cell referenced by `cell_pointer`.
+    from: Address,
+    to: Address,
+    deposit_info: DepositInfo,
+    withdraw_info: WithdrawInfo,
+}
+
+vector DepositVec <Deposit>;
+vector WithdrawVec <Withdraw>;
+vector ClaimVec <Claim>;
+
+// It's allowed to add multiple Dao actions in `SighashAll.message`.
+table DaoActionData {
+    deposits: DepositVec,
+    withdraws: WithdrawVec,
+    claims: ClaimVec,
+}
