@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { Alert, Button, Checkbox, Label } from "flowbite-react";
 import { useRouter } from "next/navigation";
-import { Alert, Button } from "flowbite-react";
+import { useState } from "react";
 
 import withdraw from "@/actions/withdraw";
-import useTipHeader from "@/hooks/use-tip-header";
-import useHeader from "@/hooks/use-header";
+import PackingVerifierHelpText from "@/components/packing-verifier-help-text";
 import useCell from "@/hooks/use-cell";
+import useHeader from "@/hooks/use-header";
+import useTipHeader from "@/hooks/use-tip-header";
 
 import Capacity from "@/components/capacity";
 import {
@@ -16,9 +17,9 @@ import {
   daoCycleProgressColor,
 } from "@/components/dao-cycle-progress";
 import * as dao from "@/lib/dao";
-import Loading from "./loading";
 import SignForm from "../../../sign-form";
 import SubmitBuildingPacket from "../../../submit-building-packet";
+import Loading from "./loading";
 
 function CellDetailsDisplay({ progress, cell, depositHeader, tipHeader }) {
   return (
@@ -44,7 +45,13 @@ function CellDetailsDisplay({ progress, cell, depositHeader, tipHeader }) {
   );
 }
 
-function CellDetails({ cell, pending, onConfirm }) {
+function CellDetails({
+  cell,
+  pending,
+  onConfirm,
+  shouldPackVerifier,
+  setShouldPackVerifier,
+}) {
   const tipHeader = useTipHeader();
   const depositHeader = useHeader(cell.blockHash);
 
@@ -66,15 +73,39 @@ function CellDetails({ cell, pending, onConfirm }) {
         >
           Confirm Withdraw
         </Button>
+        <Checkbox
+          className="mr-2 inline-block"
+          id="packVerifier"
+          name="packVerifier"
+          checked={shouldPackVerifier}
+          onChange={(e) => {
+            setShouldPackVerifier(e.target.checked);
+          }}
+        />
+        <Label htmlFor="packVerifier">
+          Pack Verifier (<PackingVerifierHelpText />)
+        </Label>
       </p>
       <CellDetailsDisplay {...{ progress, cell, tipHeader, depositHeader }} />
     </>
   );
 }
 
-function LoadCell({ outPoint, pending, onConfirm }) {
+function LoadCell({
+  outPoint,
+  pending,
+  onConfirm,
+  shouldPackVerifier,
+  setShouldPackVerifier,
+}) {
   const cell = useCell(outPoint);
-  const childProps = { cell, pending, onConfirm };
+  const childProps = {
+    cell,
+    pending,
+    onConfirm,
+    shouldPackVerifier,
+    setShouldPackVerifier,
+  };
   return cell ? <CellDetails {...childProps} /> : <Loading />;
 }
 
@@ -88,12 +119,13 @@ export default function WithdrawForm({
   const router = useRouter();
   const [formState, setFormState] = useState({});
   const [pending, setPending] = useState(false);
+  const [shouldPackVerifier, setShouldPackVerifier] = useState(false);
   const [signedBuildingPacket, setSignedBuildingPacket] = useState(null);
   const back = () => router.back();
   const onConfirm = async (cell) => {
     setPending(true);
     try {
-      setFormState(await withdraw(address, cell));
+      setFormState(await withdraw(address, cell, shouldPackVerifier));
     } catch (err) {
       setFormState({ error: err.toString() });
     }
@@ -104,7 +136,13 @@ export default function WithdrawForm({
     formState.buildingPacket === null ||
     formState.buildingPacket === undefined
   ) {
-    const childProps = { outPoint, pending, onConfirm };
+    const childProps = {
+      outPoint,
+      pending,
+      onConfirm,
+      shouldPackVerifier,
+      setShouldPackVerifier,
+    };
     return (
       <>
         {formState.error ? (
