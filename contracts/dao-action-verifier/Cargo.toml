@@ -1,0 +1,11 @@
+[package]
+name = "dao-action-verifier"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ckb-std = { version = "0.14.3", default-features = false, features = [
+  "build-with-clang",
+  "ckb-types",
+  "allocator",
+] }
