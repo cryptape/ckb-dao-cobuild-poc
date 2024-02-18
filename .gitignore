@@ -3,6 +3,7 @@
 /migrations/dev
 /migrations/joyid
 /migrations/omnilock
+/migrations/dao-action-verifier
 
 # Contract
 /target
