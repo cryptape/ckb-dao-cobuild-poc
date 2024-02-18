@@ -141,7 +141,7 @@ export function applyLockAction(buildingPacket, lockAction, seal) {
 }
 
 export function chooseWitnessStore(buildingPacket, inputIndices) {
-  // Use Cobuild when all witnesses are empty
+  // Use CoBuild when all witnesses are empty
   for (const i of inputIndices) {
     const witness = buildingPacket.value.payload.witnesses[i];
     if (witness !== null && witness !== undefined && witness !== "0x") {

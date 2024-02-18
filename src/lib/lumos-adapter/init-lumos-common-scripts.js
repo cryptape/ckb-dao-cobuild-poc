@@ -22,7 +22,7 @@ export function buildLockInfo(ckbChainConfig, scriptInfo, extraScripts) {
   return {
     codeHash: scriptInfo.CODE_HASH,
     hashType: scriptInfo.HASH_TYPE,
-    // we'll use cobuild to sign transactions, so don't need to implement functions for signing in lumos.
+    // we'll use CoBuild to sign transactions, so don't need to implement functions for signing in lumos.
     lockScriptInfo: {
       CellCollector: class {
         constructor(fromInfo, cellProvider, { config, queryOptions }) {

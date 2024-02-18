@@ -1,10 +1,10 @@
 # PoC Review Guide
 
-Cobuild is still under active development. Please refer to [ckb-transaction-cobuild-poc](https://github.com/cryptape/ckb-transaction-cobuild-poc) for contract supports.
+CoBuild is still under active development. Please refer to the [protocol overview](https://talk.nervos.org/t/ckb-transaction-cobuild-protocol-overview/7702) and [ckb-transaction-cobuild-poc](https://github.com/cryptape/ckb-transaction-cobuild-poc) for more contract demos.
 
-The core principle of the PoC is how the CKB system DAO would look like if it supports Cobuild.
+The core principle of the PoC is how the CKB system DAO would look like if it supports CoBuild.
 
-The general workflow to build transactions in Cobuild:
+The general workflow to build transactions in CoBuild:
 
 1. Create an empty **BuildingPacket** structure to initiate building a new transaction.
 2. (Type Script Phase) Users perform some operations often by submitting forms. For each operation:
@@ -13,7 +13,7 @@ The general workflow to build transactions in Cobuild:
 3. (Fee Estimation Phase) Estimate witnesses size for fee calculation.
     - a. Ensure all message **Action**s have been completed.
     - b. (Optional) Remove message **Action**s that are experimental. For example, before DAO updates its contract, the DAO operations as message **Action**s are not validated. It's better to remove it to avoid inconsistent data.
-    - c. For each lock script group: choose Cobuild or WitnessArgs layout and set the witness to enough size for fee estimation.
+    - c. For each lock script group: choose CoBuild or WitnessArgs layout and set the witness to enough size for fee estimation.
     - d. If there're witnesses are using `SighashAll` or `SighashAllOnly`. Set the first of such witnesses to `SighashAll` and put message **Action**s into it, and the remaining to `SighashAllOnly`.
     - e. If there's no such witnesses, and there's at least one message **Action**, add a `SighashAll` witness at a position beyond the number of inputs and save message **Action**s in it.
     - f. Estimate tx size and pay fee. If there are new cells added, ensure the witness size is correct for fee estimation.
@@ -30,7 +30,7 @@ The core is the step 2. There will be a framework to handle 1, 3, 4, 5, I just b
 
 This guide is based on the version [v0.0.1](https://github.com/cryptape/ckb-dao-cobuild-poc/tree/v0.0.1).
 
-1. [`src/lib/cobuild/types.js`](../src/lib/cobuild/types.js): Cobuild data structures definition.
+1. [`src/lib/cobuild/types.js`](../src/lib/cobuild/types.js): CoBuild data structures definition.
 2. [`src/lib/papps/dao`](../src/lib/papps/dao): DAO papp
     - a.
         - [`src/lib/papps/dao/schema.js`](../src/lib/papps/dao/schema.js): Action.data schema
