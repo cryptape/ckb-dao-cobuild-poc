@@ -181,6 +181,7 @@ pub struct DefaultTxSpec {
 
     alice_lock_script: packed::Script,
 
+    verifier_lock_script: packed::Script,
     verifier_type_script: packed::Script,
     dao_type_script: packed::Script,
 }
@@ -233,6 +234,9 @@ impl DefaultTxSpec {
 
         // verifier cell
         let verifier_out_point = context.deploy_cell(loader.load_binary("dao-action-verifier"));
+        let verifier_lock_script = context
+            .build_script(&always_success_out_point, Default::default())
+            .expect("script");
         let verifier_type_script = context
             .build_script(&verifier_out_point, Default::default())
             .expect("script");
@@ -241,6 +245,7 @@ impl DefaultTxSpec {
             context,
             dao_input_out_point,
             alice_lock_script,
+            verifier_lock_script,
             verifier_type_script,
             dao_type_script,
         }
@@ -321,6 +326,12 @@ pub fn pack_ar(ar: u64) -> packed::Byte32 {
     packed::Byte32::new_unchecked(Bytes::from(dao_buf))
 }
 
+pub fn unpack_ar(dao: packed::Byte32) -> u64 {
+    let mut ar_buf = [0u8; 8];
+    ar_buf.copy_from_slice(&dao.as_slice()[8..16]);
+    u64::from_le_bytes(ar_buf)
+}
+
 impl TxSpec for DefaultTxSpec {
     fn new_dao_input_spec(&mut self) -> CellSpec {
         CellSpec {
@@ -362,7 +373,7 @@ impl TxSpec for DefaultTxSpec {
         let verifier_cell = self.context.create_cell(
             packed::CellOutput::new_builder()
                 .capacity(DEFAULT_CAPACITY.pack())
-                .lock(self.alice_lock_script.clone())
+                .lock(self.verifier_lock_script.clone())
                 .type_(Some(self.verifier_type_script.clone()).pack())
                 .build(),
             Bytes::new(),
@@ -372,7 +383,7 @@ impl TxSpec for DefaultTxSpec {
             .build();
         let verifier_output = packed::CellOutput::new_builder()
             .capacity(DEFAULT_CAPACITY.pack())
-            .lock(self.alice_lock_script.clone())
+            .lock(self.verifier_lock_script.clone())
             .build();
 
         TransactionBuilder::default()
@@ -528,6 +539,14 @@ where
     let mut spec = CustomTxSpec::default();
     let claim = claim_builder(&mut spec);
 
+    let deposit_ar = unpack_ar(deposit_header.dao());
+    let withdraw_ar = unpack_ar(withdraw_header.dao());
+    let componsation = if deposit_ar != 0 {
+        (DEFAULT_CAPACITY - DAO_INPUT_OCCUPIED_CAPACITY) * (withdraw_ar - deposit_ar) / deposit_ar
+    } else {
+        0
+    };
+
     let deposit_header_hash = deposit_header.hash();
     let deposit_block_number = pack_uint64(deposit_header.number());
     let withdraw_header_hash = withdraw_header.hash();
@@ -556,8 +575,11 @@ where
         data: deposit_block_number.as_bytes(),
         ..cell
     });
-    spec.on_new_output_spec(|cell| CellSpec {
-        output: cell.output.type_(packed::ScriptOpt::default()),
+    spec.on_new_output_spec(move |cell| CellSpec {
+        output: cell
+            .output
+            .capacity((DEFAULT_CAPACITY + componsation).pack())
+            .type_(packed::ScriptOpt::default()),
         data: Bytes::new(),
         ..cell
     });

@@ -1,36 +1,25 @@
 //! Derive dao action from tx.
-use core::cmp;
-
 use alloc::collections::BTreeMap;
-use ckb_dao_cobuild_schemas::{Claim, DaoActionData, Deposit, OutPoint, Withdraw};
+use ckb_dao_cobuild_schemas::{Claim, DaoActionData, Deposit, Withdraw};
 use ckb_std::{
     ckb_constants::Source,
-    ckb_types::{bytes::Bytes, packed, prelude::*},
+    ckb_types::{packed, prelude::*},
     error::SysError,
     high_level::{
-        load_cell, load_cell_data, load_cell_occupied_capacity, load_header, load_input_out_point,
+        load_cell, load_cell_occupied_capacity, load_header, load_input_out_point,
         load_witness_args, QueryIter,
     },
     since::EpochNumberWithFraction,
 };
 
 use crate::{
-    constants::{DAO_DEPOSIT_DATA, DAO_TYPE_SCRIPT},
+    constants::DAO_TYPE_SCRIPT,
+    dao::is_deposit_cell,
     error::Error,
     error_code::ErrorCode,
+    keys::{ClaimKey, DepositKey, WithdrawKey},
     trace_error,
 };
-
-#[derive(Debug, Eq, PartialEq)]
-pub struct DepositKey {
-    to: Bytes,
-    amount: Bytes,
-}
-
-#[derive(Debug, Eq, PartialEq)]
-pub struct WithdrawKey {
-    cell_pointer: Bytes,
-}
 
 #[derive(Debug)]
 pub struct WithdrawValue {
@@ -38,7 +27,6 @@ pub struct WithdrawValue {
     input_cell_output: packed::CellOutput,
 }
 
-pub type ClaimKey = WithdrawKey;
 pub type ClaimValue = WithdrawValue;
 
 #[derive(Default, Debug)]
@@ -46,12 +34,6 @@ pub struct DerivedDaoActionData {
     deposits: BTreeMap<DepositKey, usize>,
     withdraws: BTreeMap<WithdrawKey, WithdrawValue>,
     claims: BTreeMap<ClaimKey, ClaimValue>,
-}
-
-fn is_deposit_cell(index: usize, source: Source) -> bool {
-    load_cell_data(index, source)
-        .map(|data| data.as_ref() == DAO_DEPOSIT_DATA)
-        .unwrap_or(false)
 }
 
 fn load_header_from_witness(witness: &[u8]) -> Result<packed::RawHeader, Error> {
@@ -196,7 +178,7 @@ impl DerivedDaoActionData {
         Ok(())
     }
 
-    pub fn verify(&mut self, dao_action_data: DaoActionData) -> Result<(), Error> {
+    pub fn verify(&mut self, dao_action_data: &DaoActionData) -> Result<(), Error> {
         for deposit in dao_action_data.deposits().into_iter() {
             self.verify_deposit(deposit)?;
         }
@@ -501,66 +483,5 @@ impl DerivedDaoActionData {
                 claim
             )),
         }
-    }
-}
-
-impl From<&packed::CellOutput> for DepositKey {
-    fn from(value: &packed::CellOutput) -> Self {
-        Self {
-            to: value.lock().as_bytes(),
-            amount: value.capacity().as_bytes(),
-        }
-    }
-}
-
-impl From<&Deposit> for DepositKey {
-    fn from(value: &Deposit) -> Self {
-        Self {
-            to: value.to().as_bytes(),
-            amount: value.amount().as_bytes(),
-        }
-    }
-}
-
-impl PartialOrd for DepositKey {
-    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for DepositKey {
-    fn cmp(&self, other: &Self) -> cmp::Ordering {
-        match self.to.cmp(&other.to) {
-            cmp::Ordering::Equal => self.amount.cmp(&other.amount),
-            other => other,
-        }
-    }
-}
-
-impl From<packed::OutPoint> for WithdrawKey {
-    fn from(value: packed::OutPoint) -> Self {
-        Self {
-            cell_pointer: value.as_bytes(),
-        }
-    }
-}
-
-impl From<&OutPoint> for WithdrawKey {
-    fn from(value: &OutPoint) -> Self {
-        Self {
-            cell_pointer: value.as_bytes(),
-        }
-    }
-}
-
-impl PartialOrd for WithdrawKey {
-    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for WithdrawKey {
-    fn cmp(&self, other: &Self) -> cmp::Ordering {
-        self.cell_pointer.cmp(&other.cell_pointer)
     }
 }
