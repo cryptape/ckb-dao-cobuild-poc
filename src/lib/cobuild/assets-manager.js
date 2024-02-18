@@ -1,6 +1,7 @@
 import { Indexer } from "@ckb-lumos/ckb-indexer";
 import { addressToScript } from "@ckb-lumos/helpers";
 import { BI } from "@ckb-lumos/bi";
+import { buildScript } from "@/lib/config";
 
 export const DEPOSIT_DAO_DATA = "0x0000000000000000";
 
@@ -29,14 +30,22 @@ async function reduceDao(collector) {
   return { deposits, withdraws };
 }
 
-function buildDaoScript(ckbChainConfig) {
-  const template = ckbChainConfig.SCRIPTS.DAO;
+async function reduceVerifierCells(collector) {
+  const cells = [];
 
-  return {
-    codeHash: template.CODE_HASH,
-    hashType: template.HASH_TYPE,
-    args: "0x",
-  };
+  for await (const cell of collector.collect()) {
+    cells.push(cell);
+  }
+
+  return cells;
+}
+
+function buildDaoScript(ckbChainConfig) {
+  return buildScript(ckbChainConfig.SCRIPTS.DAO, "0x");
+}
+
+function buildVerifierScript(ckbChainConfig) {
+  return buildScript(ckbChainConfig.SCRIPTS.DAO_ACTION_VERIFIER, "0x");
 }
 
 export async function fetchAssets(address, { ckbRpcUrl, ckbChainConfig }) {
@@ -58,7 +67,14 @@ export async function fetchAssets(address, { ckbRpcUrl, ckbChainConfig }) {
   });
   const daoCells = await reduceDao(daoCollector);
 
-  return { ckbBalance, daoCells };
+  const verifierCollector = indexer.collector({
+    lock,
+    argsLen: (lock.args.length - 2) / 2,
+    type: buildVerifierScript(ckbChainConfig),
+  });
+  const verifierCells = await reduceVerifierCells(verifierCollector);
+
+  return { ckbBalance, daoCells, verifierCells };
 }
 
 export function isDaoWithdrawCell(cellOutput, cellData, ckbChainConfig) {
@@ -75,7 +91,7 @@ export function isDaoDepositCell(cellOutput, cellData, ckbChainConfig) {
   );
 }
 
-export function isNoneDaoTypedCell(cellOutput, cellData, ckbChainConfig) {
+export function isNoneDaoTypedCell(cellOutput, ckbChainConfig) {
   const dao = ckbChainConfig.SCRIPTS.DAO;
   return cellOutput.type && cellOutput.type.codeHash !== dao.CODE_HASH;
 }

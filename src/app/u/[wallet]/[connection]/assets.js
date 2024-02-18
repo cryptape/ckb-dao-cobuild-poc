@@ -1,7 +1,10 @@
-import Link from "next/link";
+import { BI, formatUnit } from "@ckb-lumos/bi";
 import { Button } from "flowbite-react";
-import Capacity from "@/components/capacity";
+import Link from "next/link";
+
 import { fetchAssetsWithCache } from "@/actions/fetch-assets";
+import Capacity from "@/components/capacity";
+import PackingVerifierHelpText from "@/components/packing-verifier-help-text";
 import DaoCells from "./dao-cells";
 import Loading from "./loading";
 
@@ -25,7 +28,38 @@ export function CkbSection({ wallet, connection, address, ckbBalance }) {
   );
 }
 
-export function DaoSection({ wallet, connection, address, daoCells }) {
+export function VerifierCells({ wallet, connection, verifierCells }) {
+  let lockedCapacity = BI.from(0);
+  for (const cell of verifierCells) {
+    lockedCapacity = lockedCapacity.add(BI.from(cell.cellOutput.capacity));
+  }
+  return (
+    <>
+      <h3>Verifier Cells</h3>
+      <PackingVerifierHelpText />
+      <p>
+        You have {formatUnit(lockedCapacity, "ckb")} CKB locked in DAO action
+        verifier cells. You can reclaim them by destroy the verifier cells.
+      </p>
+      <Button
+        as={Link}
+        href={`/u/${wallet}/${connection}/reclaim`}
+        color="light"
+        className="not-prose inline-block"
+      >
+        Reclaim
+      </Button>
+    </>
+  );
+}
+
+export function DaoSection({
+  wallet,
+  connection,
+  address,
+  daoCells,
+  verifierCells,
+}) {
   return (
     <section>
       <h2>DAO</h2>
@@ -44,6 +78,13 @@ export function DaoSection({ wallet, connection, address, daoCells }) {
         address={address}
         daoCells={daoCells}
       />
+      {verifierCells.length > 0 ? (
+        <VerifierCells
+          wallet={wallet}
+          connection={connection}
+          verifierCells={verifierCells}
+        />
+      ) : null}
     </section>
   );
 }
@@ -64,13 +105,18 @@ export function AssetsFallback() {
 }
 
 export default async function Assets({ wallet, connection, address }) {
-  const { ckbBalance, daoCells } = await fetchAssetsWithCache(address);
+  const { ckbBalance, daoCells, verifierCells } =
+    await fetchAssetsWithCache(address);
   const childProps = { wallet, connection, address };
 
   return (
     <>
       <CkbSection ckbBalance={ckbBalance} {...childProps} />
-      <DaoSection daoCells={daoCells} {...childProps} />
+      <DaoSection
+        daoCells={daoCells}
+        verifierCells={verifierCells}
+        {...childProps}
+      />
     </>
   );
 }

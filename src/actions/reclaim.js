@@ -1,19 +1,15 @@
 "use server";
 
-import { claimDao } from "@/lib/cobuild/publishers";
+import { reclaimDaoVerifiers } from "@/lib/cobuild/publishers";
 import { getConfig } from "@/lib/config";
 import { prepareLockActions } from "@/lib/cobuild/lock-actions";
 import { payFee } from "@/lib/cobuild/fee-manager";
-import { prepareVerifier } from "@/lib/papps/dao/verifier";
 
-export default async function withdraw(from, cell, shouldPackVerifier, config) {
+export default async function reclaim(from, config) {
   config = config ?? getConfig();
 
   try {
-    let buildingPacket = await claimDao(config)({ cell });
-    if (shouldPackVerifier) {
-      buildingPacket = await prepareVerifier(buildingPacket, from, config);
-    }
+    let buildingPacket = await reclaimDaoVerifiers(config)({ from });
     buildingPacket = await payFee(
       buildingPacket,
       [{ address: from, feeRate: 1200 }],

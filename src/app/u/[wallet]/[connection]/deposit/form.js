@@ -1,14 +1,15 @@
 "use client";
 
+import { Alert, Checkbox, Label, Popover, TextInput } from "flowbite-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useFormState } from "react-dom";
-import { useRouter } from "next/navigation";
-import { Label, TextInput, Alert } from "flowbite-react";
 
-import Capacity from "@/components/capacity";
-import SubmitButton from "@/components/submit-button";
-import { fetchAssetsWithCache } from "@/actions/fetch-assets";
 import deposit from "@/actions/deposit";
+import { fetchAssetsWithCache } from "@/actions/fetch-assets";
+import Capacity from "@/components/capacity";
+import PackingVerifierHelpText from "@/components/packing-verifier-help-text";
+import SubmitButton from "@/components/submit-button";
 import Loading from "../loading";
 import SignForm from "../sign-form";
 import SubmitBuildingPacket from "../submit-building-packet";
@@ -51,6 +52,12 @@ export function TransactionForm({ formAction, formState, address }) {
             </>
           }
         />
+      </div>
+      <div>
+        <Checkbox className="mr-2" id="packVerifier" name="packVerifier" />
+        <Label htmlFor="packVerifier">
+          Pack Verifier (<PackingVerifierHelpText />)
+        </Label>
       </div>
       <SubmitButton>Deposit</SubmitButton>
     </form>

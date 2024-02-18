@@ -40,7 +40,10 @@ export default function SignForm({
         ckbChainConfig,
       );
       onSubmit(
-        finalizeWitnesses(applyLockAction(buildingPacket, lockAction, seal)),
+        finalizeWitnesses(
+          applyLockAction(buildingPacket, lockAction, seal),
+          ckbChainConfig,
+        ),
       );
     } catch (err) {
       console.error(err.stack);

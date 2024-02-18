@@ -3,20 +3,19 @@
 import { Accordion, Spinner } from "flowbite-react";
 import moment from "moment";
 
+import { DaoActionData } from "@/lib/papps/dao/schema";
+import { getDaoScriptHash } from "@/lib/papps/dao/script-info";
 import { blockchain, utils as lumosBaseUtils } from "@ckb-lumos/base";
 import { BI, formatUnit } from "@ckb-lumos/bi";
 import * as lumosHelpers from "@ckb-lumos/helpers";
 
-import { DaoActionData } from "@/lib/papps/dao/schema";
-import { getDaoScriptHash } from "@/lib/papps/dao/script-info";
-
-const { ckbHash } = lumosBaseUtils;
-
 import {
-  isDaoWithdrawCell,
   isDaoDepositCell,
+  isDaoWithdrawCell,
   isNoneDaoTypedCell,
 } from "../assets-manager";
+
+const { ckbHash } = lumosBaseUtils;
 
 function BriefAddress({ address }) {
   const display = `${address.slice(0, 15)}...${address.slice(-14)}`;
@@ -399,9 +398,9 @@ export function TxSection({
 
   return (
     <dl className="divide-y divide-gray-100">
-      {process.env.DEBUG !== undefined ? (
+      {process.env.NEXT_PUBLIC_DEBUG ? (
         <div className="py-3 sm:grid sm:grid-cols-3">
-          <dt className="leading-6 text-gray-900">Hash</dt>
+          <dt className="leading-6 text-gray-900">Building Packet</dt>
           <dd className="text-gray-700 sm:col-span-2 sm:mt-0 break-all">
             <pre className="font-mono p-4 bg-slate-800 text-slate-300 rounded overflow-scroll">
               {JSON.stringify(buildingPacket, null, 2)}
@@ -564,10 +563,10 @@ function collectAssets(
       }
     } else if (isDaoDepositCell(cellOutput, cellData, ckbChainConfig)) {
       assets.daoWithdrawn = assets.daoWithdrawn.add(cellCapacity);
-    } else if (isNoneDaoTypedCell(cellOutput, cellData, ckbChainConfig)) {
+    } else if (isNoneDaoTypedCell(cellOutput, ckbChainConfig)) {
       assets.destroyedTypedCells.push({
         cellOutput,
-        outPoint: buildingPacket.value.packet.inputs[i].previousOutput,
+        outPoint: buildingPacket.value.payload.inputs[i].previousOutput,
         data: cellData,
       });
     }
@@ -580,9 +579,9 @@ function collectAssets(
 
     if (isDaoDepositCell(cellOutput, cellData, ckbChainConfig)) {
       assets.daoDeposited = assets.daoDeposited.add(cellCapacity);
-    } else if (isNoneDaoTypedCell(cellOutput, cellData, ckbChainConfig)) {
+    } else if (isNoneDaoTypedCell(cellOutput, ckbChainConfig)) {
       assets.createdTypedCells.push({
-        outPoint: buildingPacket.value.packet.inputs[i].previousOutput,
+        outPoint: buildingPacket.value.payload.outputs[i].previousOutput,
         data: cellData,
       });
     }

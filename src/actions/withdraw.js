@@ -4,12 +4,16 @@ import { withdrawDao } from "@/lib/cobuild/publishers";
 import { getConfig } from "@/lib/config";
 import { prepareLockActions } from "@/lib/cobuild/lock-actions";
 import { payFee } from "@/lib/cobuild/fee-manager";
+import { prepareVerifier } from "@/lib/papps/dao/verifier";
 
-export default async function withdraw(from, cell, config) {
+export default async function withdraw(from, cell, shouldPackVerifier, config) {
   config = config ?? getConfig();
 
   try {
     let buildingPacket = await withdrawDao(config)({ cell });
+    if (shouldPackVerifier) {
+      buildingPacket = await prepareVerifier(buildingPacket, from, config);
+    }
     buildingPacket = await payFee(
       buildingPacket,
       [{ address: from, feeRate: 1200 }],
