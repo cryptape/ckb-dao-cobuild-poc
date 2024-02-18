@@ -9,5 +9,8 @@ pub enum ErrorCode {
     Unknown = 20,
 
     // custom errors
-    InvalidActionDataSchema = 64,
+    DuplicatedActionData = 64,
+    InvalidActionDataSchema = 65,
+    NotCoverred = 66,
+    NotFound = 67,
 }
