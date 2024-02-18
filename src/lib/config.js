@@ -30,10 +30,10 @@ const CKB_CHAINS_CONFIGS = {
 
       DAO_ACTION_VERIFIER: {
         CODE_HASH:
-          "0xbdca5b74e5d0c913fed19d8482a99af1ef8a639541438b2e00189f5e18907ef9",
+          "0xf9788b3ae2d4a328281281ae401c0b38401b468d01e1d9316edacc6367aa7176",
         HASH_TYPE: "type",
         TX_HASH:
-          "0x9157bcc278176ba9e823a50d72631be9e9b964e7a5ca11db2782c059c4c788ad",
+          "0x4a16eb60719c2c091eafb5a30c9e9b722bd287531ba189bd7de46bce872c6499",
         INDEX: "0x0",
         DEP_TYPE: "code",
       },

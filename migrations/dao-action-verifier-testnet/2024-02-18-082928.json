@@ -1,0 +1,13 @@
+{
+  "cell_recipes": [
+    {
+      "name": "dao-action-verifier",
+      "tx_hash": "0x4a16eb60719c2c091eafb5a30c9e9b722bd287531ba189bd7de46bce872c6499",
+      "index": 0,
+      "occupied_capacity": 15686200000000,
+      "data_hash": "0x019de71c1a480e4acf472d07c9011a2437eda719b10716c8dfa7725b8a6f2958",
+      "type_id": "0xf9788b3ae2d4a328281281ae401c0b38401b468d01e1d9316edacc6367aa7176"
+    }
+  ],
+  "dep_group_recipes": []
+}
