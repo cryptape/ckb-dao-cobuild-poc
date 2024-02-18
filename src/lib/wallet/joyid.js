@@ -1,8 +1,9 @@
-import * as joyid from "@joyid/ckb";
 import { bytes } from "@ckb-lumos/codec";
 import * as lumosHelpers from "@ckb-lumos/helpers";
+import * as joyid from "@joyid/ckb";
 
 import { urlSafeBase64Decode } from "../base64";
+import { buildScript } from "../config";
 
 export const title = "Joyid";
 export const lockScriptName = "Joyid Lock";
@@ -19,11 +20,7 @@ export function address(connection, ckbChainConfig) {
     config: ckbChainConfig,
   });
   const scriptInfo = ckbChainConfig.SCRIPTS.JOYID;
-  const script = {
-    codeHash: scriptInfo.CODE_HASH,
-    hashType: scriptInfo.HASH_TYPE,
-    args,
-  };
+  const script = buildScript(scriptInfo, args);
   return lumosHelpers.encodeToAddress(script, {
     config: ckbChainConfig,
   });

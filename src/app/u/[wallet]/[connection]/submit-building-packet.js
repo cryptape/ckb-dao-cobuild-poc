@@ -9,6 +9,28 @@ function isDone({ txStatus: { status } }) {
   return status === "committed" || status === "rejected";
 }
 
+function considerPoolRejectedDuplicatedTransactionAsPending(state) {
+  const {
+    txStatus: { status, reason },
+  } = state;
+  const reasonString = reason ?? "";
+  if (status === "rejected" && reasonString.indexOf("-1107") !== -1) {
+    return {
+      ...state,
+      txStatus: {
+        status: "pending",
+        reason: null,
+      },
+    };
+  }
+
+  return state;
+}
+
+function decorateState(state) {
+  return considerPoolRejectedDuplicatedTransactionAsPending(state);
+}
+
 function sendUntilDone(tx, setState) {
   let aborted = false;
   let timeout = null;
@@ -16,8 +38,9 @@ function sendUntilDone(tx, setState) {
   const fn = () => {
     sendTx(tx).then((state) => {
       if (!aborted) {
-        setState(state);
-        if (!isDone(state)) {
+        const decoratedState = decorateState(state);
+        setState(decoratedState);
+        if (!isDone(decoratedState)) {
           timeout = setTimeout(fn, 3000);
         }
       }
@@ -53,7 +76,9 @@ export function TxStatus({ txHash, txStatus, ckbChainConfig }) {
 
 export function TxHash({ txHash, ckbChainConfig: { EXPLORER_URL } }) {
   return EXPLORER_URL ? (
-    <a href={`${EXPLORER_URL}/transaction/${txHash}`}>{txHash}</a>
+    <a target="_blank" href={`${EXPLORER_URL}/transaction/${txHash}`}>
+      {txHash}
+    </a>
   ) : (
     <span>{txHash}</span>
   );

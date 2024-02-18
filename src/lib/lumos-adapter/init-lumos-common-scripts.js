@@ -1,6 +1,7 @@
+import { buildCellDep } from "@/lib/config";
 import {
-  parseFromInfo,
   common as commonScripts,
+  parseFromInfo,
 } from "@ckb-lumos/common-scripts";
 import { addCellDep } from "@ckb-lumos/common-scripts/lib/helper";
 
@@ -21,7 +22,7 @@ export function buildLockInfo(ckbChainConfig, scriptInfo, extraScripts) {
   return {
     codeHash: scriptInfo.CODE_HASH,
     hashType: scriptInfo.HASH_TYPE,
-    // we'll use cobuild to sign transactions, so don't need to implement functions for signing in lumos.
+    // we'll use CoBuild to sign transactions, so don't need to implement functions for signing in lumos.
     lockScriptInfo: {
       CellCollector: class {
         constructor(fromInfo, cellProvider, { config, queryOptions }) {
@@ -105,21 +106,9 @@ export function buildLockInfo(ckbChainConfig, scriptInfo, extraScripts) {
         // II. CellDeps
         //===========================
         // The helper method addCellDep avoids adding duplicated cell deps.
-        addCellDep(txMutable, {
-          outPoint: {
-            txHash: scriptInfo.TX_HASH,
-            index: scriptInfo.INDEX,
-          },
-          depType: scriptInfo.DEP_TYPE,
-        });
+        addCellDep(txMutable, buildCellDep(scriptInfo));
         for (const extraScriptInfo of extraScripts) {
-          addCellDep(txMutable, {
-            outPoint: {
-              txHash: extraScriptInfo.TX_HASH,
-              index: extraScriptInfo.INDEX,
-            },
-            depType: extraScriptInfo.DEP_TYPE,
-          });
+          addCellDep(txMutable, buildCellDep(extraScriptInfo));
         }
 
         return txMutable.asImmutable();

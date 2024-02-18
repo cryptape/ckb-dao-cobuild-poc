@@ -27,6 +27,16 @@ const CKB_CHAINS_CONFIGS = {
         INDEX: "0x0",
         DEP_TYPE: "code",
       },
+
+      DAO_ACTION_VERIFIER: {
+        CODE_HASH:
+          "0xf9788b3ae2d4a328281281ae401c0b38401b468d01e1d9316edacc6367aa7176",
+        HASH_TYPE: "type",
+        TX_HASH:
+          "0x4a16eb60719c2c091eafb5a30c9e9b722bd287531ba189bd7de46bce872c6499",
+        INDEX: "0x0",
+        DEP_TYPE: "code",
+      },
     },
   },
 };
@@ -66,6 +76,15 @@ function buildCkbChainConfig(ckbChain) {
       TX_HASH: presence(process.env.NEXT_PUBLIC_OMNILOCK_TX_HASH),
     },
   );
+  const DAO_ACTION_VERIFIER = assign(
+    { ...template.SCRIPTS.DAO_ACTION_VERIFIER },
+    {
+      CODE_HASH: presence(
+        process.env.NEXT_PUBLIC_DAO_ACTION_VERIFIER_CODE_HASH,
+      ),
+      TX_HASH: presence(process.env.NEXT_PUBLIC_DAO_ACTION_VERIFIER_TX_HASH),
+    },
+  );
 
   const tx0 =
     presence(process.env.NEXT_PUBLIC_CKB_GENESIS_TX_0) ??
@@ -80,6 +99,7 @@ function buildCkbChainConfig(ckbChain) {
     SCRIPTS: {
       JOYID,
       OMNILOCK_CUSTOM,
+      DAO_ACTION_VERIFIER,
       DAO: {
         ...template.SCRIPTS.DAO,
         TX_HASH: tx0,
@@ -124,5 +144,23 @@ export function getTestnetConfig() {
     ckbChain: DEFAULT_CKB_RPC_URL,
     ckbRpcUrl: DEFAULT_CKB_CHAIN,
     ckbChainConfig: CKB_CHAINS_CONFIGS[DEFAULT_CKB_CHAIN],
+  };
+}
+
+export function buildCellDep(scriptInfo) {
+  return {
+    outPoint: {
+      txHash: scriptInfo.TX_HASH,
+      index: scriptInfo.INDEX,
+    },
+    depType: scriptInfo.DEP_TYPE,
+  };
+}
+
+export function buildScript(scriptInfo, args) {
+  return {
+    codeHash: scriptInfo.CODE_HASH,
+    hashType: scriptInfo.HASH_TYPE,
+    args,
   };
 }

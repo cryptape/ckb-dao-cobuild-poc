@@ -1,0 +1,11 @@
+[package]
+name = "tests"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ckb-testtool = "0.10.1"
+serde_json = "1.0"
+ckb-transaction-cobuild = { git = "https://github.com/cryptape/ckb-transaction-cobuild-poc.git" }
+ckb-dao-cobuild-schemas = { path = "../../crates/ckb-dao-cobuild-schemas" }
+hex-literal = "0.4.1"

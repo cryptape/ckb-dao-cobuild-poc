@@ -4,7 +4,7 @@ set -e
 set -u
 [ -n "${DEBUG:-}" ] && set -x || true
 
-if ! [ -f build/release/joyid ]; then
+if ! [ -e build/release/joyid ]; then
   echo "Expect the contract files in build/release" >&2
   echo "Run bin/download-contracts.sh to download them from the testnet" >&2
   exit 1
@@ -35,7 +35,12 @@ function deploy() {
   ckb-cli deploy apply-txs --info-file "$INFO_FILE" --migration-dir "$MIGRATION_DIR"
 }
 
-deploy joyid
+deploy dao-action-verifier
+bin/generate-blocks.sh 4
+sleep 1
+
+# try twice in case the indexer has not updated yet
+deploy joyid || deploy joyid
 bin/generate-blocks.sh 4
 sleep 1
 

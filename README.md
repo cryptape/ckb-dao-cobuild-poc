@@ -1,12 +1,22 @@
-# CKB DAO Cobuild PoC
+# CKB DAO CoBuild PoC
 
 - [Contributing Guidelines](docs/CONTRIBUTING.md)
 - [Guidelines for PoC Reviewers](docs/poc-review-guide.md)
 
 ## Disclaimer
 
-- This is a PoC demo showcasing the management of DAO deposits through the use of a new transaction building protocol named **Cobuild**.
+- This is a PoC demo showcasing the management of DAO deposits through the use of a new transaction building protocol named [CoBuild](https://talk.nervos.org/t/ckb-transaction-cobuild-protocol-overview/7702).
 - There's a [preview](https://ckb-dao-cobuild-poc.vercel.app/) deployed to the testnet, have fun.
+
+## Background
+
+This PoC shows how CoBuild works with type scripts and lock scripts that only support WitnessArgs layout.
+
+- [x] It defines the [CoBuild action data schema for DAO](schemas/dao.mol).
+- [x] It adopts the transaction building workflow based on the CoBuild data structure [BuildingPacket](src/lib/cobuild/types.js).
+- [x] It uses WitnessArgs layout for lock scripts and the DAO type script.
+- [x] It shows how to present the transaction before users sign it.
+- [ ] By default, the PoC discards the CoBuild message after building the transaction. However, it provides an opt-in feature to pack the CoBuild message and the example contract to verify the message.
 
 ## Getting Started
 

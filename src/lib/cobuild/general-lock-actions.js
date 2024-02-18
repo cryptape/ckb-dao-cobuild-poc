@@ -66,13 +66,13 @@ export function prepareLockActionWithWitnessStore(
 export function storeWitnessForFeeEstimation(
   buildingPacket,
   scriptHash,
-  inputIndices,
+  witnessStore,
   createSealPlaceHolder,
 ) {
-  buildingPacket = prepareLockAction(
+  buildingPacket = prepareLockActionWithWitnessStore(
     buildingPacket,
     scriptHash,
-    inputIndices,
+    witnessStore,
     createSealPlaceHolder,
   );
   const lockAction = buildingPacket.value.lockActions.find(
@@ -141,7 +141,7 @@ export function applyLockAction(buildingPacket, lockAction, seal) {
 }
 
 export function chooseWitnessStore(buildingPacket, inputIndices) {
-  // Use Cobuild when all witnesses are empty
+  // Use CoBuild when all witnesses are empty
   for (const i of inputIndices) {
     const witness = buildingPacket.value.payload.witnesses[i];
     if (witness !== null && witness !== undefined && witness !== "0x") {

@@ -1,0 +1,16 @@
+[workspace]
+resolver = "2"
+
+members = [
+  "crates/ckb-dao-cobuild-schemas",
+  # Please don't remove the following line, we use it to automatically
+  # detect insertion point for newly generated crates.
+  # @@INSERTION_POINT@@
+  "contracts/dao-action-verifier",
+  "contracts/__tests__",
+]
+
+[profile.release]
+overflow-checks = true
+strip = true
+codegen-units = 1

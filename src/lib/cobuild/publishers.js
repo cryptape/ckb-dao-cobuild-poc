@@ -8,6 +8,10 @@ export function transferCkb(config) {
   return createLumosCkbBuilder(config).transferCkb;
 }
 
+export function reclaimDaoVerifiers(config) {
+  return createLumosCkbBuilder(config).reclaimDaoVerifiers;
+}
+
 export function depositDao(config) {
   return createLumosCkbBuilder(config).depositDao;
 }

@@ -3,6 +3,12 @@
 /migrations/dev
 /migrations/joyid
 /migrations/omnilock
+/migrations/dao-action-verifier
+/migrations/*/deployment.json
+
+# Contract
+/target
+/contracts/__tests__/failed_txs
 
 # CKB
 /ckb-miner.toml

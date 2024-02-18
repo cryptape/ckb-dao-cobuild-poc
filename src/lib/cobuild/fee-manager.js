@@ -23,6 +23,7 @@ export async function payFee(buildingPacket, feePayments, config) {
         ),
       buildingPacket,
     ),
+    config.ckbChainConfig,
   );
 
   const buildingPacketHavePaidFee = await payFeeWithBuildingPacket(
@@ -55,7 +56,12 @@ function storeWitnessForFeeEstimation(
     return generalLockActions.storeWitnessForFeeEstimation(
       buildingPacket,
       scriptHash,
-      inputIndices,
+      {
+        type: "WitnessArgsStore",
+        value: {
+          inputIndices,
+        },
+      },
       // Variable length, but 500 is usually enough.
       () => bytes.hexify(new Uint8Array(500)),
     );
@@ -65,7 +71,12 @@ function storeWitnessForFeeEstimation(
     return generalLockActions.storeWitnessForFeeEstimation(
       buildingPacket,
       scriptHash,
-      inputIndices,
+      {
+        type: "WitnessArgsStore",
+        value: {
+          inputIndices,
+        },
+      },
       // 85 = 65 signature in OmnilockWitnessLock
       () => `0x${"0".repeat(85 * 2)}`,
     );

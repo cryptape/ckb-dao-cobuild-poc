@@ -1,8 +1,3 @@
-import { RPC } from "@ckb-lumos/rpc";
-import { common as commonScripts, dao } from "@ckb-lumos/common-scripts";
-import { bytes } from "@ckb-lumos/codec";
-import * as lumosHelpers from "@ckb-lumos/helpers";
-
 import { getCellWithoutCache } from "@/actions/get-cell";
 import {
   getDepositBlockNumberFromWithdrawCell,
@@ -10,23 +5,20 @@ import {
 } from "@/lib/dao";
 import { mergeBuildingPacketFromSkeleton } from "@/lib/lumos-adapter/create-building-packet-from-skeleton";
 import createSkeletonFromBuildingPacket from "@/lib/lumos-adapter/create-skeleton-from-building-packet";
+import { blockchain } from "@ckb-lumos/base";
+import { BI } from "@ckb-lumos/bi";
+import { bytes, number } from "@ckb-lumos/codec";
+import { common as commonScripts, dao } from "@ckb-lumos/common-scripts";
+import * as lumosHelpers from "@ckb-lumos/helpers";
+import { RPC } from "@ckb-lumos/rpc";
+import { buildCellDep } from "@/lib/config";
 
 import { DaoActionData } from "./schema";
 import {
-  getDaoScriptInfo,
   getDaoScriptHash,
+  getDaoScriptInfo,
   getDaoScriptInfoHash,
 } from "./script-info";
-
-function buildCellDep(scriptInfo) {
-  return {
-    outPoint: {
-      txHash: scriptInfo.TX_HASH,
-      index: scriptInfo.INDEX,
-    },
-    depType: scriptInfo.DEP_TYPE,
-  };
-}
 
 function addDistinctCellDep(list, ...items) {
   return pushDistinctBy(
@@ -50,22 +42,62 @@ function pushDistinctBy(list, items, eq) {
   return newItems.length > 0 ? list.push(...newItems) : list;
 }
 
+const DAO_CYCLE = BI.from(180);
+// 4 hours
+const ESITMATED_EPOCH_DURATION = BI.from(4 * 60 * 60 * 1000);
+
+function parseEpoch(epoch) {
+  return {
+    length: epoch.shr(40).and(0xfff),
+    index: epoch.shr(24).and(0xfff),
+    number: epoch.and(0xffffff),
+  };
+}
+
+function computeWaitingMilliseconds(from, to) {
+  let fromEpoch = parseEpoch(BI.from(from.epoch));
+  let toEpoch = parseEpoch(BI.from(to.epoch));
+
+  let fromEpochPassedDuration = fromEpoch.index
+    .mul(ESITMATED_EPOCH_DURATION)
+    .div(fromEpoch.length);
+  let toEpochPassedDuration = toEpoch.index
+    .mul(ESITMATED_EPOCH_DURATION)
+    .div(toEpoch.length);
+
+  // find next cycle
+  let remainingEpochsDraft = DAO_CYCLE.sub(
+    toEpoch.number.sub(fromEpoch.number).mod(DAO_CYCLE),
+  );
+  let remainingEpochs =
+    remainingEpochsDraft.eq(DAO_CYCLE) &&
+    toEpoch.number.gt(fromEpoch.number) &&
+    fromEpochPassedDuration.gte(toEpochPassedDuration)
+      ? BI.from(0)
+      : remainingEpochsDraft;
+
+  return remainingEpochs
+    .mul(ESITMATED_EPOCH_DURATION)
+    .add(fromEpochPassedDuration)
+    .sub(toEpochPassedDuration)
+    .toHexString();
+}
+
 async function onDeposit({ ckbChainConfig }, txSkeleton, op) {
-  const { lock, capacity } = op;
-  const from = op.from ?? lock;
+  const { from, to, amount } = op;
 
   const fromAddress = lumosHelpers.encodeToAddress(from, {
     config: ckbChainConfig,
   });
-  const lockAddress = lumosHelpers.encodeToAddress(lock, {
+  const toAddress = lumosHelpers.encodeToAddress(to, {
     config: ckbChainConfig,
   });
 
   txSkeleton = await dao.deposit(
     txSkeleton,
     fromAddress,
-    lockAddress,
-    capacity,
+    toAddress,
+    amount.shannons,
     {
       config: ckbChainConfig,
     },
@@ -75,7 +107,7 @@ async function onDeposit({ ckbChainConfig }, txSkeleton, op) {
   txSkeleton = await commonScripts.injectCapacity(
     txSkeleton,
     [fromAddress],
-    capacity,
+    amount.shannons,
     fromAddress,
     undefined,
     { config: ckbChainConfig },
@@ -85,8 +117,19 @@ async function onDeposit({ ckbChainConfig }, txSkeleton, op) {
 }
 
 async function onWithdraw({ ckbChainConfig, ckbRpcUrl }, txSkeleton, op) {
-  const { previousOutput } = op;
-  const cell = await getCellWithoutCache(previousOutput, { ckbRpcUrl });
+  const { cellPointer } = op;
+  const rpc = new RPC(ckbRpcUrl);
+
+  const cell = await getCellWithoutCache(cellPointer, { ckbRpcUrl });
+  const depositHeader = await rpc.getHeader(cell.blockHash);
+  const safeWithdrawBlockNumber = BI.from(await rpc.getTipBlockNumber()).sub(
+    24,
+  );
+  const estimatedWithdrawHeader = safeWithdrawBlockNumber.gt(
+    BI.from(depositHeader.number),
+  )
+    ? await rpc.getHeaderByNumber(safeWithdrawBlockNumber.toHexString())
+    : depositHeader;
   const from = cell.cellOutput.lock;
 
   const fromAddress = lumosHelpers.encodeToAddress(from, {
@@ -119,23 +162,84 @@ async function onWithdraw({ ckbChainConfig, ckbRpcUrl }, txSkeleton, op) {
     config: ckbChainConfig,
   });
 
-  return [txSkeleton, op];
+  // Add header dep for withdraw estimation
+  while (txSkeleton.get("witnesses").size < txSkeleton.get("inputs").size - 1) {
+    txSkeleton = txSkeleton.update("witnesses", (witnesses) =>
+      witnesses.push("0x"),
+    );
+  }
+  // add header deps
+  txSkeleton = txSkeleton.update("headerDeps", (headerDeps) =>
+    addDistinctHeaderDep(headerDeps, estimatedWithdrawHeader.hash),
+  );
+  const estimatedWithdrawHeaderDepIndex = txSkeleton.get("headerDeps").size - 1;
+  txSkeleton = txSkeleton.updateIn(["witnesses", 0], (witness) => {
+    let unpackedWitnessArgs =
+      witness === "0x" ? {} : blockchain.WitnessArgs.unpack(witness);
+    let newWitnessArgs = {
+      ...unpackedWitnessArgs,
+      inputType: bytes.hexify(
+        number.Uint64LE.pack(estimatedWithdrawHeaderDepIndex),
+      ),
+    };
+    return bytes.hexify(blockchain.WitnessArgs.pack(newWitnessArgs));
+  });
+
+  return [
+    txSkeleton,
+    {
+      ...op,
+      from,
+      to: op.to ?? from,
+      depositInfo: {
+        amount: { shannons: cell.cellOutput.capacity },
+        depositBlockNumber: depositHeader.number,
+        depositTimestamp: {
+          unixMilliseconds: depositHeader.timestamp,
+        },
+      },
+      estimatedWithdrawInfo: {
+        waitingMilliseconds: computeWaitingMilliseconds(
+          depositHeader,
+          estimatedWithdrawHeader,
+        ),
+        withdrawInfo: {
+          withdrawBlockNumber: estimatedWithdrawHeader.number,
+          withdrawTimestamp: {
+            unixMilliseconds: estimatedWithdrawHeader.timestamp,
+          },
+          componsationAmount: {
+            shannons: BI.from(
+              dao.calculateMaximumWithdraw(
+                cell,
+                depositHeader.dao,
+                estimatedWithdrawHeader.dao,
+              ),
+            )
+              .sub(cell.cellOutput.capacity)
+              .toHexString(),
+          },
+        },
+      },
+    },
+  ];
 }
 
 async function onClaim({ ckbRpcUrl, ckbChainConfig }, txSkeleton, op) {
-  const { previousOutput } = op;
+  const { cellPointer } = op;
   const rpc = new RPC(ckbRpcUrl);
 
-  const cell = await getCellWithoutCache(previousOutput, { ckbRpcUrl });
+  const cell = await getCellWithoutCache(cellPointer, { ckbRpcUrl });
   const depositBlockNumber = getDepositBlockNumberFromWithdrawCell(cell);
   const depositBlockHash = await rpc.getBlockHash(depositBlockNumber);
   const depositHeader = await rpc.getHeader(depositBlockHash);
   const withdrawHeader = await rpc.getHeader(cell.blockHash);
 
-  const fromAddress = lumosHelpers.encodeToAddress(cell.cellOutput.lock, {
+  const from = cell.cellOutput.lock;
+  const fromAddress = lumosHelpers.encodeToAddress(from, {
     config: ckbChainConfig,
   });
-  const to = op.to ?? cell.cellOutput.lock;
+  const to = op.to ?? from;
 
   // add input
   const since =
@@ -193,72 +297,88 @@ async function onClaim({ ckbRpcUrl, ckbChainConfig }, txSkeleton, op) {
     () => packDaoWitnessArgs(depositBlockPos),
   );
 
-  return [txSkeletonMutable.asImmutable(), op];
-}
-
-const handlers = {
-  Deposit: onDeposit,
-  DepositFrom: onDeposit,
-  Withdraw: onWithdraw,
-  WithdrawTo: onWithdraw,
-  Claim: onClaim,
-  ClaimTo: onClaim,
-};
-
-export async function addOperations(config, buildingPacket, operations) {
-  let txSkeleton = createSkeletonFromBuildingPacket(buildingPacket, config);
-
-  const newOperations = Array(operations.length);
-  for (const [i, op] of operations.entries()) {
-    const [newTxSkeleton, newOpValue] = await handlers[op.type](
-      config,
-      txSkeleton,
-      op.value,
-    );
-
-    txSkeleton = newTxSkeleton;
-    newOperations[i] = { type: op.type, value: newOpValue };
-  }
-
   return [
-    mergeBuildingPacketFromSkeleton(buildingPacket, txSkeleton),
-    newOperations,
+    txSkeletonMutable.asImmutable(),
+    {
+      ...op,
+      from,
+      to,
+      depositInfo: {
+        amount: { shannons: cell.cellOutput.capacity },
+        depositBlockNumber: depositHeader.number,
+        depositTimestamp: {
+          unixMilliseconds: depositHeader.timestamp,
+        },
+      },
+      withdrawInfo: {
+        withdrawBlockNumber: withdrawHeader.number,
+        withdrawTimestamp: {
+          unixMilliseconds: withdrawHeader.timestamp,
+        },
+        componsationAmount: {
+          shannons: BI.from(
+            dao.calculateMaximumWithdraw(
+              cell,
+              depositHeader.dao,
+              withdrawHeader.dao,
+            ),
+          )
+            .sub(cell.cellOutput.capacity)
+            .toHexString(),
+        },
+      },
+    },
   ];
 }
 
 export async function willAddAction(config, buildingPacket, actionData) {
-  const ops =
-    actionData.type === "SingleOperation"
-      ? [actionData.value]
-      : actionData.value;
+  let txSkeleton = createSkeletonFromBuildingPacket(buildingPacket, config);
 
-  const [newBuildingPacket, newOps] = await addOperations(
-    config,
+  const newActionData = { deposits: [], withdraws: [], claims: [] };
+  for (const [i, deposit] of actionData.deposits.entries()) {
+    const [newTxSkeleton, newDeposit] = await onDeposit(
+      config,
+      txSkeleton,
+      deposit,
+    );
+    txSkeleton = newTxSkeleton;
+    newActionData.deposits[i] = newDeposit;
+  }
+  for (const [i, withdraw] of actionData.withdraws.entries()) {
+    const [newTxSkeleton, newWithdraw] = await onWithdraw(
+      config,
+      txSkeleton,
+      withdraw,
+    );
+    txSkeleton = newTxSkeleton;
+    newActionData.withdraws[i] = newWithdraw;
+  }
+  for (const [i, claim] of actionData.claims.entries()) {
+    const [newTxSkeleton, newClaim] = await onClaim(config, txSkeleton, claim);
+    txSkeleton = newTxSkeleton;
+    newActionData.claims[i] = newClaim;
+  }
+
+  const newBuildingPacket = mergeBuildingPacketFromSkeleton(
     buildingPacket,
-    ops,
+    txSkeleton,
   );
-  buildingPacket = newBuildingPacket;
 
   const action = {
     scriptHash: getDaoScriptHash(config),
     scriptInfoHash: getDaoScriptInfoHash(config),
-    data: bytes.hexify(
-      DaoActionData.pack({
-        type: actionData.type,
-        value: actionData.type === "SingleOperation" ? newOps[0] : newOps,
-      }),
-    ),
+    data: bytes.hexify(DaoActionData.pack(newActionData)),
   };
   const scriptInfo = getDaoScriptInfo(config);
 
   return {
-    type: buildingPacket.type,
+    type: newBuildingPacket.type,
     value: {
-      ...buildingPacket.value,
+      ...newBuildingPacket.value,
       message: {
-        actions: [...buildingPacket.value.message.actions, action],
+        actions: [...newBuildingPacket.value.message.actions, action],
       },
-      scriptInfos: [...buildingPacket.value.scriptInfos, scriptInfo],
+      scriptInfos: [...newBuildingPacket.value.scriptInfos, scriptInfo],
     },
   };
 }
