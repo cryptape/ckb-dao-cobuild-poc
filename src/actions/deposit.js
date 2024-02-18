@@ -6,11 +6,16 @@ import { prepareLockActions } from "@/lib/cobuild/lock-actions";
 import { payFee } from "@/lib/cobuild/fee-manager";
 import { prepareVerifier } from "@/lib/papps/dao/verifier";
 
+function checked(formData, name) {
+  const value = formData.get(name);
+  return value !== null && value !== undefined;
+}
+
 export default async function deposit(_prevState, formData, config) {
   config = config ?? getConfig();
 
   const from = formData.get("from");
-  const shouldPackVerifier = formData.get("packVerifier") !== undefined;
+  const shouldPackVerifier = checked(formData, "packVerifier");
 
   try {
     let buildingPacket = await depositDao(config)(formData);
