@@ -4,6 +4,7 @@
 /migrations/joyid
 /migrations/omnilock
 /migrations/dao-action-verifier
+/migrations/*/deployment.json
 
 # Contract
 /target
