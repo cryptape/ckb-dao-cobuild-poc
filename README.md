@@ -16,7 +16,7 @@ This PoC shows how CoBuild works with type scripts and lock scripts that only su
 - [x] It adopts the transaction building workflow based on the CoBuild data structure [BuildingPacket](src/lib/cobuild/types.js).
 - [x] It uses WitnessArgs layout for lock scripts and the DAO type script.
 - [x] It shows how to present the transaction before users sign it.
-- [ ] By default, the PoC discards the CoBuild message after building the transaction. However, it provides an opt-in feature to pack the CoBuild message and the example contract to verify the message.
+- [x] By default, the PoC discards the CoBuild message after building the transaction. However, it provides an opt-in feature to pack the CoBuild message and the example contract to verify the message.
 
 ## Getting Started
 
