@@ -1,6 +1,7 @@
 "use client";
 
 import { Accordion, Spinner } from "flowbite-react";
+import moment from "moment";
 
 import { blockchain, utils as lumosBaseUtils } from "@ckb-lumos/base";
 import { BI, formatUnit } from "@ckb-lumos/bi";
@@ -115,50 +116,249 @@ export default function BuildingPacketReview({
   );
 }
 
-export function DaoOperationReview({ op, ckbChainConfig }) {
-  if (op.type === "Deposit") {
-    return (
-      <li className="break-all">
-        Deposit {formatUnit(op.value.capacity, "ckb")} to{" "}
-        {lumosHelpers.encodeToAddress(op.value.lock, {
-          config: ckbChainConfig,
-        })}
-      </li>
-    );
-  } else if (op.type === "Withdraw") {
-    return (
-      <li className="break-all">
-        Withdraw output {op.value.previousOutput.index} of transaction{" "}
-        {op.value.previousOutput.txHash}.
-      </li>
-    );
-  } else if (op.type === "Claim") {
-    return (
-      <li className="break-all">
-        Claim output {op.value.previousOutput.index} of transaction{" "}
-        {op.value.previousOutput.txHash}, the total claimed amount is{" "}
-        {formatUnit(op.value.totalClaimedCapacity, "ckb")}
-      </li>
-    );
-  } else {
-    return <li>{op.type}</li>;
-  }
+export function DaoDepositReview({ op, ckbChainConfig }) {
+  return (
+    <li className="break-all">
+      <dl className="px-4 divide-y divide-gray-100">
+        <div className="py-3 sm:grid sm:grid-cols-4">
+          <dt>Operation</dt>
+          <dd className="sm:col-span-3">Deposit</dd>
+        </div>
+        <div className="py-3 sm:grid sm:grid-cols-4">
+          <dt>From</dt>
+          <dd className="py-3 sm:col-span-3">
+            {lumosHelpers.encodeToAddress(op.from, {
+              config: ckbChainConfig,
+            })}
+          </dd>
+        </div>
+        <div className="py-3 sm:grid sm:grid-cols-4">
+          <dt>To</dt>
+          <dd className="sm:col-span-3">
+            {lumosHelpers.encodeToAddress(op.to, {
+              config: ckbChainConfig,
+            })}
+          </dd>
+        </div>
+        <div className="py-3 sm:grid sm:grid-cols-4">
+          <dt>Amount</dt>
+          <dd className="sm:col-span-3">
+            {formatUnit(op.amount.shannons, "ckb")}
+          </dd>
+        </div>
+      </dl>
+    </li>
+  );
+}
+
+export function DaoWithdrawReview({ op, ckbChainConfig }) {
+  return (
+    <li className="break-all">
+      <dl className="px-4 divide-y divide-gray-100">
+        <div className="py-3 sm:grid sm:grid-cols-4">
+          <dt>Operation</dt>
+          <dd className="sm:col-span-3">Withdraw</dd>
+        </div>
+        <div className="py-3 sm:grid sm:grid-cols-4">
+          <dt>Cell</dt>
+          <dd className="sm:col-span-3">
+            Output {op.cellPointer.index} of Transaction {op.cellPointer.txHash}
+          </dd>
+        </div>
+        <div className="py-3 sm:grid sm:grid-cols-4">
+          <dt>From</dt>
+          <dd className="sm:col-span-3">
+            {lumosHelpers.encodeToAddress(op.from, {
+              config: ckbChainConfig,
+            })}
+          </dd>
+        </div>
+        <div className="py-3 sm:grid sm:grid-cols-4">
+          <dt>To</dt>
+          <dd className="sm:col-span-3">
+            {lumosHelpers.encodeToAddress(op.to, {
+              config: ckbChainConfig,
+            })}
+          </dd>
+        </div>
+
+        <dt className="py-3 -mx-4 px-4 py-2 sm:col-span-4 text-gray-900 bg-gray-100">
+          Deposit Info
+        </dt>
+        <div className="py-3 sm:grid sm:grid-cols-4">
+          <dt>Amount</dt>
+          <dd className="sm:col-span-3">
+            {formatUnit(op.depositInfo.amount.shannons, "ckb")}
+          </dd>
+        </div>
+        <div className="py-3 sm:grid sm:grid-cols-4">
+          <dt>Block #</dt>
+          <dd className="sm:col-span-3">
+            {op.depositInfo.depositBlockNumber.toString()}
+          </dd>
+        </div>
+        <div className="py-3 sm:grid sm:grid-cols-4">
+          <dt>Time</dt>
+          <dd className="sm:col-span-3">
+            {moment(
+              op.depositInfo.depositTimestamp.unixMilliseconds.toNumber(),
+            ).format("lll")}
+          </dd>
+        </div>
+
+        {op.estimatedWithdrawInfo ? (
+          <>
+            <dt className="py-3 -mx-4 px-4 py-2 sm:col-span-4 text-gray-900 bg-gray-100">
+              Estimated Withdraw Info
+            </dt>
+            <div className="py-3 sm:grid sm:grid-cols-4">
+              <dt>Componsation</dt>
+              <dd className="sm:col-span-3">
+                {formatUnit(
+                  op.estimatedWithdrawInfo.withdrawInfo.componsationAmount
+                    .shannons,
+                  "ckb",
+                )}
+              </dd>
+            </div>
+            <div className="py-3 sm:grid sm:grid-cols-4">
+              <dt>Block #</dt>
+              <dd className="sm:col-span-3">
+                {op.estimatedWithdrawInfo.withdrawInfo.withdrawBlockNumber.toString()}
+              </dd>
+            </div>
+            <div className="py-3 sm:grid sm:grid-cols-4">
+              <dt>Time</dt>
+              <dd className="sm:col-span-3">
+                {moment(
+                  op.estimatedWithdrawInfo.withdrawInfo.withdrawTimestamp.unixMilliseconds.toNumber(),
+                ).format("lll")}
+              </dd>
+            </div>
+            <div className="py-3 sm:grid sm:grid-cols-4">
+              <dt>Waiting</dt>
+              <dd className="sm:col-span-3">
+                {moment
+                  .duration(
+                    op.estimatedWithdrawInfo.waitingMilliseconds.toNumber(),
+                    "ms",
+                  )
+                  .humanize()}
+              </dd>
+            </div>
+          </>
+        ) : null}
+      </dl>
+    </li>
+  );
+}
+
+export function DaoClaimReview({ op, ckbChainConfig }) {
+  return (
+    <li className="break-all">
+      <dl className="px-4 divide-y divide-gray-100">
+        <div className="py-3 sm:grid sm:grid-cols-4">
+          <dt>Operation</dt>
+          <dd className="sm:col-span-3">Claim</dd>
+        </div>
+        <div className="py-3 sm:grid sm:grid-cols-4">
+          <dt>Cell</dt>
+          <dd className="sm:col-span-3">
+            Output {op.cellPointer.index} of Transaction {op.cellPointer.txHash}
+          </dd>
+        </div>
+        <div className="py-3 sm:grid sm:grid-cols-4">
+          <dt>From</dt>
+          <dd className="sm:col-span-3">
+            {lumosHelpers.encodeToAddress(op.from, {
+              config: ckbChainConfig,
+            })}
+          </dd>
+        </div>
+        <div className="py-3 sm:grid sm:grid-cols-4">
+          <dt>To</dt>
+          <dd className="sm:col-span-3">
+            {lumosHelpers.encodeToAddress(op.to, {
+              config: ckbChainConfig,
+            })}
+          </dd>
+        </div>
+
+        <dt className="py-3 -mx-4 px-4 py-2 sm:col-span-4 text-gray-900 bg-gray-100">
+          Deposit Info
+        </dt>
+        <div className="py-3 sm:grid sm:grid-cols-4">
+          <dt>Amount</dt>
+          <dd className="sm:col-span-3">
+            {formatUnit(op.depositInfo.amount.shannons, "ckb")}
+          </dd>
+        </div>
+        <div className="py-3 sm:grid sm:grid-cols-4">
+          <dt>Block #</dt>
+          <dd className="sm:col-span-3">
+            {op.depositInfo.depositBlockNumber.toString()}
+          </dd>
+        </div>
+        <div className="py-3 sm:grid sm:grid-cols-4">
+          <dt>Time</dt>
+          <dd className="sm:col-span-3">
+            {moment(
+              op.depositInfo.depositTimestamp.unixMilliseconds.toNumber(),
+            ).format("lll")}
+          </dd>
+        </div>
+
+        <dt className="py-3 -mx-4 px-4 py-2 sm:col-span-4 text-gray-900 bg-gray-100">
+          Withdraw Info
+        </dt>
+        <div className="py-3 sm:grid sm:grid-cols-4">
+          <dt>Componsation</dt>
+          <dd className="sm:col-span-3">
+            {formatUnit(op.withdrawInfo.componsationAmount.shannons, "ckb")}
+          </dd>
+        </div>
+        <div className="py-3 sm:grid sm:grid-cols-4">
+          <dt>Block #</dt>
+          <dd className="sm:col-span-3">
+            {op.withdrawInfo.withdrawBlockNumber.toString()}
+          </dd>
+        </div>
+        <div className="py-3 sm:grid sm:grid-cols-4">
+          <dt>Time</dt>
+          <dd className="sm:col-span-3">
+            {moment(
+              op.withdrawInfo.withdrawTimestamp.unixMilliseconds.toNumber(),
+            ).format("lll")}
+          </dd>
+        </div>
+      </dl>
+    </li>
+  );
 }
 
 export function DaoActionReview({ action, unpackedData, ckbChainConfig }) {
-  const ops =
-    unpackedData.type === "SingleOperation"
-      ? [unpackedData.value]
-      : unpackedData.value;
-
   return (
     <div>
       <div>
         <strong>DAO</strong>
         <ol>
-          {ops.map((op, i) => (
-            <DaoOperationReview
-              key={`dao-${action.scriptHash}-${i}`}
+          {unpackedData.deposits.map((op, i) => (
+            <DaoDepositReview
+              key={`dao-${action.scriptHash}-deposit-${i}`}
+              op={op}
+              ckbChainConfig={ckbChainConfig}
+            />
+          ))}
+          {unpackedData.withdraws.map((op, i) => (
+            <DaoWithdrawReview
+              key={`dao-${action.scriptHash}-deposit-${i}`}
+              op={op}
+              ckbChainConfig={ckbChainConfig}
+            />
+          ))}
+          {unpackedData.claims.map((op, i) => (
+            <DaoClaimReview
+              key={`dao-${action.scriptHash}-deposit-${i}`}
               op={op}
               ckbChainConfig={ckbChainConfig}
             />
@@ -200,7 +400,7 @@ export function TxSection({
   return (
     <dl className="divide-y divide-gray-100">
       {process.env.DEBUG !== undefined ? (
-        <div className="x-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+        <div className="py-3 sm:grid sm:grid-cols-3">
           <dt className="leading-6 text-gray-900">Hash</dt>
           <dd className="text-gray-700 sm:col-span-2 sm:mt-0 break-all">
             <pre className="font-mono p-4 bg-slate-800 text-slate-300 rounded overflow-scroll">
@@ -209,31 +409,31 @@ export function TxSection({
           </dd>
         </div>
       ) : null}
-      <div className="x-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+      <div className="py-3 sm:grid sm:grid-cols-3">
         <dt className="leading-6 text-gray-900">Hash</dt>
         <dd className="text-gray-700 sm:col-span-2 sm:mt-0 break-all">
           {txHash}
         </dd>
       </div>
-      <div className="x-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+      <div className="py-3 sm:grid sm:grid-cols-3">
         <dt className="leading-6 text-gray-900">Fee</dt>
         <dd className="text-gray-700 sm:col-span-2 sm:mt-0">
           <Capacity value={fee} /> CKB
         </dd>
       </div>
-      <div className="x-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+      <div className="py-3 sm:grid sm:grid-cols-3">
         <dt className="leading-6 text-gray-900">Your Challenge</dt>
         <dd className="text-gray-700 sm:col-span-2 sm:mt-0 break-all">
           {lockActionData.digest}
         </dd>
       </div>
-      <div className="x-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+      <div className="py-3 sm:grid sm:grid-cols-3">
         <dt className="leading-6 text-gray-900">Your Witness Layout</dt>
         <dd className="text-gray-700 sm:col-span-2 sm:mt-0">
           {witnessLayoutDisplay(lockActionData.witnessStore.type)}
         </dd>
       </div>
-      <div className="x-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+      <div className="py-3 sm:grid sm:grid-cols-3">
         <dt className="leading-6 text-gray-900">Message</dt>
         <dd className="text-gray-700 divide-y divide-gray-100 space-y-4 sm:col-span-2 sm:mt-0">
           {buildingPacket.value.message.actions.map((action) => (
@@ -252,20 +452,20 @@ export function TxSection({
 export function AssetsSection({ address, assets }) {
   return (
     <dl className="divide-y divide-gray-100">
-      <div className="x-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+      <div className="py-3 sm:grid sm:grid-cols-3">
         <dt className="leading-6 text-gray-900">Address</dt>
         <dd className="text-gray-700 sm:col-span-2 sm:mt-0 break-all">
           {address}
         </dd>
       </div>
-      <div className="x-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+      <div className="py-3 sm:grid sm:grid-cols-3">
         <dt className="leading-6 text-gray-900">CKB</dt>
         <dd className="text-gray-700 sm:col-span-2 sm:mt-0">
           <CapacityChange value={assets.ckbIncome} />
         </dd>
       </div>
       {assets.daoDeposited.isZero() ? null : (
-        <div className="x-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+        <div className="py-3 sm:grid sm:grid-cols-3">
           <dt className="leading-6 text-gray-900">DAO (Deposited)</dt>
           <dd className="text-gray-700 sm:col-span-2 sm:mt-0">
             <Capacity value={assets.daoDeposited} />
@@ -273,7 +473,7 @@ export function AssetsSection({ address, assets }) {
         </div>
       )}
       {assets.daoWithdrawn.isZero() ? null : (
-        <div className="x-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+        <div className="py-3 sm:grid sm:grid-cols-3">
           <dt className="leading-6 text-gray-900">DAO (Withdrawn)</dt>
           <dd className="text-gray-700 sm:col-span-2 sm:mt-0">
             <Capacity value={assets.daoWithdrawn} />
@@ -281,7 +481,7 @@ export function AssetsSection({ address, assets }) {
         </div>
       )}
       {assets.daoClaimedBase.isZero() ? null : (
-        <div className="x-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+        <div className="py-3 sm:grid sm:grid-cols-3">
           <dt className="leading-6 text-gray-900">DAO (Claimed)</dt>
           <dd className="text-gray-700 sm:col-span-2 sm:mt-0">
             <Capacity value={assets.daoClaimedBase} /> +

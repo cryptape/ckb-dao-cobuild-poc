@@ -49,13 +49,13 @@ export default function createLumosCkbBuilder(config) {
 
     withdrawDao: async function ({ cell }) {
       return await createBuildingPacketByCreator(dao, "withdraw", {
-        previousOutput: cell.outPoint,
+        cellPointer: cell.outPoint,
       });
     },
 
     claimDao: async function ({ cell }) {
       return await createBuildingPacketByCreator(dao, "claim", {
-        previousOutput: cell.outPoint,
+        cellPointer: cell.outPoint,
       });
     },
   };
