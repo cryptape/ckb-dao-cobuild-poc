@@ -9,9 +9,9 @@ const { computeScriptHash } = lumosBaseUtils;
 
 // Generate lockActions.
 //
-// Do not set any witness in payload to use the Cobuild layout.
+// Do not set any witness in payload to use the CoBuild layout.
 export function prepareLockActions(buildingPacket, ckbChainConfig) {
-  // Workaround to pack Cobuild message as the extra witness.
+  // Workaround to pack CoBuild message as the extra witness.
   //
   // Before the next action, there's no actual witness set yet. So `finalizeWitnesses` will assume there's no SighashAll witness in the tx and will pack the message as the extra witness. This assumption is currect because this PoC uses WitnessArgs layout for lock actions and DAO type script.
   buildingPacket = finalizeWitnesses(buildingPacket, ckbChainConfig);
@@ -75,7 +75,7 @@ export function finalizeWitnesses(buildingPacket, ckbChainConfig) {
     }
   }
 
-  // if there's a verifier cell, pack the Cobuild message into witness
+  // if there's a verifier cell, pack the CoBuild message into witness
   if (!hasSighashAll && hasVerifierCell(buildingPacket, ckbChainConfig)) {
     for (
       let i = witnesses.length;

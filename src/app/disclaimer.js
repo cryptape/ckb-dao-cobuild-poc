@@ -8,7 +8,13 @@ export default function Disclaimer({ config: { ckbChain } }) {
         <li>
           This is a PoC demo showcasing the management of DAO deposits through
           the use of a new transaction building protocol named{" "}
-          <strong>Cobuild</strong>.
+          <a
+            target="_blank"
+            href="https://talk.nervos.org/t/ckb-transaction-cobuild-protocol-overview/7702"
+          >
+            CoBuild
+          </a>
+          .
         </li>
         <li>This demo runs in the CKB chain {ckbChain}.</li>
       </ul>
