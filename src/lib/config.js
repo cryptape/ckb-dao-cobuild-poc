@@ -146,3 +146,21 @@ export function getTestnetConfig() {
     ckbChainConfig: CKB_CHAINS_CONFIGS[DEFAULT_CKB_CHAIN],
   };
 }
+
+export function buildCellDep(scriptInfo) {
+  return {
+    outPoint: {
+      txHash: scriptInfo.TX_HASH,
+      index: scriptInfo.INDEX,
+    },
+    depType: scriptInfo.DEP_TYPE,
+  };
+}
+
+export function buildScript(scriptInfo, args) {
+  return {
+    codeHash: scriptInfo.CODE_HASH,
+    hashType: scriptInfo.HASH_TYPE,
+    args,
+  };
+}

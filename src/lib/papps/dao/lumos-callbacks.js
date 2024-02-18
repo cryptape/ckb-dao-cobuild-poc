@@ -1,10 +1,3 @@
-import { RPC } from "@ckb-lumos/rpc";
-import { BI } from "@ckb-lumos/bi";
-import { common as commonScripts, dao } from "@ckb-lumos/common-scripts";
-import { blockchain } from "@ckb-lumos/base";
-import { bytes, number } from "@ckb-lumos/codec";
-import * as lumosHelpers from "@ckb-lumos/helpers";
-
 import { getCellWithoutCache } from "@/actions/get-cell";
 import {
   getDepositBlockNumberFromWithdrawCell,
@@ -12,23 +5,20 @@ import {
 } from "@/lib/dao";
 import { mergeBuildingPacketFromSkeleton } from "@/lib/lumos-adapter/create-building-packet-from-skeleton";
 import createSkeletonFromBuildingPacket from "@/lib/lumos-adapter/create-skeleton-from-building-packet";
+import { blockchain } from "@ckb-lumos/base";
+import { BI } from "@ckb-lumos/bi";
+import { bytes, number } from "@ckb-lumos/codec";
+import { common as commonScripts, dao } from "@ckb-lumos/common-scripts";
+import * as lumosHelpers from "@ckb-lumos/helpers";
+import { RPC } from "@ckb-lumos/rpc";
+import { buildCellDep } from "@/lib/config";
 
 import { DaoActionData } from "./schema";
 import {
-  getDaoScriptInfo,
   getDaoScriptHash,
+  getDaoScriptInfo,
   getDaoScriptInfoHash,
 } from "./script-info";
-
-function buildCellDep(scriptInfo) {
-  return {
-    outPoint: {
-      txHash: scriptInfo.TX_HASH,
-      index: scriptInfo.INDEX,
-    },
-    depType: scriptInfo.DEP_TYPE,
-  };
-}
 
 function addDistinctCellDep(list, ...items) {
   return pushDistinctBy(

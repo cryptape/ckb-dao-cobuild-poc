@@ -1,4 +1,4 @@
-import { getConfig } from "@/lib/config";
+import { getConfig, buildScript } from "@/lib/config";
 import {
   createScriptInfoFromHumanTemplate,
   computeScriptInfoHash,
@@ -21,11 +21,7 @@ export function getDaoHumanScriptInfoTemplate() {
 
 function getDaoScriptHashFromConfig(config) {
   const daoInfo = config.ckbChainConfig.SCRIPTS.DAO;
-  const daoScript = {
-    codeHash: daoInfo.CODE_HASH,
-    hashType: daoInfo.HASH_TYPE,
-    args: "0x",
-  };
+  const daoScript = buildScript(daoInfo, "0x");
   return computeScriptHash(daoScript);
 }
 

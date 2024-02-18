@@ -1,5 +1,6 @@
 import { bytes } from "@ckb-lumos/codec";
 import * as lumosHelpers from "@ckb-lumos/helpers";
+import { buildScript } from "@/lib/config";
 import { bech32 } from "bech32";
 import * as bs58 from "bs58";
 import { packOmnilockWitnessLock } from "./omni-lock";
@@ -49,11 +50,7 @@ export function btcAddressToCkbAddress(btcAddress, scriptInfo, ckbChainConfig) {
   }
   args += "00";
 
-  const script = {
-    codeHash: scriptInfo.CODE_HASH,
-    hashType: scriptInfo.HASH_TYPE,
-    args: args,
-  };
+  const script = buildScript(scriptInfo, args);
   return lumosHelpers.encodeToAddress(script, {
     config: ckbChainConfig,
   });

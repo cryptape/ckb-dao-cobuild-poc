@@ -1,29 +1,12 @@
-import { Indexer } from "@ckb-lumos/ckb-indexer";
-import {
-  minimalCellCapacityCompatible,
-  addressToScript,
-} from "@ckb-lumos/helpers";
-import { common as commonScripts } from "@ckb-lumos/common-scripts";
+import { buildCellDep, buildScript } from "@/lib/config";
 import { mergeBuildingPacketFromSkeleton } from "@/lib/lumos-adapter/create-building-packet-from-skeleton";
 import createSkeletonFromBuildingPacket from "@/lib/lumos-adapter/create-skeleton-from-building-packet";
-
-function buildScript(scriptInfo, args) {
-  return {
-    codeHash: scriptInfo.CODE_HASH,
-    hashType: scriptInfo.HASH_TYPE,
-    args,
-  };
-}
-
-function buildCellDep(scriptInfo) {
-  return {
-    outPoint: {
-      txHash: scriptInfo.TX_HASH,
-      index: scriptInfo.INDEX,
-    },
-    depType: scriptInfo.DEP_TYPE,
-  };
-}
+import { Indexer } from "@ckb-lumos/ckb-indexer";
+import { common as commonScripts } from "@ckb-lumos/common-scripts";
+import {
+  addressToScript,
+  minimalCellCapacityCompatible,
+} from "@ckb-lumos/helpers";
 
 export async function prepareVerifier(buildingPacket, fromAddress, config) {
   let txSkeleton = createSkeletonFromBuildingPacket(buildingPacket, config);

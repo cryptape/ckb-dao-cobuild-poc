@@ -5,7 +5,7 @@ export default function PackingVerifierHelpText() {
       className="hover:cursor-pointer"
       href="https://github.com/cryptape/ckb-dao-cobuild-poc/blob/develop/docs/packing-verifier.md"
     >
-      What's This?
+      What&apos;s This?
     </a>
   );
 }
