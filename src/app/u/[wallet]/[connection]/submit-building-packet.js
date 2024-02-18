@@ -53,7 +53,9 @@ export function TxStatus({ txHash, txStatus, ckbChainConfig }) {
 
 export function TxHash({ txHash, ckbChainConfig: { EXPLORER_URL } }) {
   return EXPLORER_URL ? (
-    <a href={`${EXPLORER_URL}/transaction/${txHash}`}>{txHash}</a>
+    <a target="_blank" href={`${EXPLORER_URL}/transaction/${txHash}`}>
+      {txHash}
+    </a>
   ) : (
     <span>{txHash}</span>
   );
